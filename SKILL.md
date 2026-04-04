@@ -328,7 +328,7 @@ write_memory("aso_[app_name]", {
   "metadata": {...},
   "keywords_researched": [...],
   "competitors_analyzed": [...],
-  "last_updated": "2025-..."
+  "last_updated": "2026-..."
 })
 ```
 
