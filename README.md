@@ -64,7 +64,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/anthropics/aso-skill.git
+git clone https://github.com/furkancingoz/aso-skill.git
 cd aso-skill
 
 # Install to Claude Code skills directory
@@ -85,7 +85,7 @@ cp -r /path/to/aso-skill .claude/skills/aso/
 ### Option 3: Direct Clone
 
 ```bash
-git clone https://github.com/anthropics/aso-skill.git ~/.claude/skills/aso
+git clone https://github.com/furkancingoz/aso-skill.git ~/.claude/skills/aso
 ```
 
 ### Dependencies (Optional)
@@ -375,7 +375,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 <div align="center">
 
-**Built with ❤️ for Claude Code**
+**Created by [@furkancingoz](https://github.com/furkancingoz)**
 
 [⬆ Back to Top](#-aso-skill---complete-app-store-optimization-for-claude-code)
 

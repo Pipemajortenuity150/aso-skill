@@ -8,7 +8,7 @@ Complete installation instructions for ASO Skill.
 
 ```bash
 # Clone and install
-git clone https://github.com/anthropics/aso-skill.git ~/.claude/skills/aso
+git clone https://github.com/furkancingoz/aso-skill.git ~/.claude/skills/aso
 
 # Verify
 ls ~/.claude/skills/aso/SKILL.md
@@ -34,13 +34,13 @@ ls ~/.claude/skills/aso/SKILL.md
 
 **Option A: User-Level (Recommended)**
 ```bash
-git clone https://github.com/anthropics/aso-skill.git ~/.claude/skills/aso
+git clone https://github.com/furkancingoz/aso-skill.git ~/.claude/skills/aso
 ```
 
 **Option B: Project-Level**
 ```bash
 mkdir -p .claude/skills
-git clone https://github.com/anthropics/aso-skill.git .claude/skills/aso
+git clone https://github.com/furkancingoz/aso-skill.git .claude/skills/aso
 ```
 
 **Option C: Manual Download**
@@ -226,7 +226,7 @@ git pull origin main
 
 ```bash
 rm -rf ~/.claude/skills/aso
-git clone https://github.com/anthropics/aso-skill.git ~/.claude/skills/aso
+git clone https://github.com/furkancingoz/aso-skill.git ~/.claude/skills/aso
 ```
 
 ---
