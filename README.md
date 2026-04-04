@@ -136,12 +136,14 @@ For screenshot generation, install **SF Pro Display Black**:
 
 ## 🎮 Commands
 
-| Command | Description | Time |
-|---------|-------------|------|
-| `/aso [app-name]` | Quick metadata generation | 2-5 min |
-| `/aso-audit [app-name]` | Full ASO audit with competitor analysis | 20-30 min |
-| `/aso-submit [app-name]` | Submit to App Store Connect | 5-10 min |
-| `/aso-screenshots` | Generate App Store screenshots | 15-30 min |
+| Command | Description |
+|---------|-------------|
+| `/aso [app-name]` | Quick metadata generation (any language) |
+| `/aso-audit [app-name]` | Full ASO audit with competitor analysis |
+| `/aso-submit [app-name]` | Push to App Store Connect (metadata, privacy, screenshots) |
+| `/aso-iap [app-name]` | Set up IAPs & Subscriptions |
+| `/aso-screenshots` | Generate App Store screenshot specifications |
+| `/aso-setup` | Configure credentials (API key, web session) |
 
 ---
 

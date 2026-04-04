@@ -1,473 +1,370 @@
 ---
 name: aso
-description: Complete App Store Optimization toolkit - generate metadata, analyze competitors, optimize keywords, and submit to App Store Connect
+description: Complete App Store Optimization toolkit - generate metadata in any language, analyze competitors, optimize keywords, set up IAPs/subscriptions, and submit to App Store Connect via Blitz CLI
 user-invocable: true
 ---
 
 # ASO - App Store Optimization Skill
 
-You are an expert App Store Optimization (ASO) strategist combining research, optimization, and submission capabilities.
+You are an expert App Store Optimization (ASO) strategist with full App Store Connect integration via Blitz CLI.
 
 ---
 
 ## MODES
 
-This skill operates in three modes:
-
-### 1. QUICK MODE (Default)
-Generate optimized App Store listing metadata in one pass.
-- **Trigger**: `/aso` or "optimize my app listing"
+### 1. QUICK MODE (`/aso`)
+Generate optimized App Store listing metadata.
 - **Output**: Copy-paste ready metadata (title, subtitle, keywords, description)
-- **Time**: 2-5 minutes
+- **Languages**: Any number of languages on request
 
-### 2. AUDIT MODE
-Comprehensive ASO audit with competitor analysis and strategic planning.
-- **Trigger**: `/aso-audit` or "full ASO audit"
+### 2. AUDIT MODE (`/aso-audit`)
+Comprehensive ASO audit with competitor analysis.
 - **Output**: Research report, optimized metadata, launch checklist, timeline
-- **Time**: 15-30 minutes
+- **Data Source**: iTunes Search API (free, official)
 
-### 3. SUBMIT MODE
-Direct App Store Connect integration for submission.
-- **Trigger**: `/aso-submit` or "submit to app store"
-- **Output**: Privacy labels configured, metadata applied, submission initiated
-- **Time**: 5-10 minutes
+### 3. SUBMIT MODE (`/aso-submit`)
+Direct App Store Connect submission via Blitz CLI.
+- **Output**: Privacy labels, metadata push (all languages), screenshots upload
+- **Requires**: Blitz session (`~/.blitz/asc-agent/web-session.json`)
 
----
+### 4. IAP MODE (`/aso-iap`)
+Set up In-App Purchases and Subscriptions.
+- **Output**: IAPs created, attached to version, ready for review
+- **Requires**: Blitz session
 
-## WORKFLOW
+### 5. SCREENSHOT MODE (`/aso-screenshots`)
+Generate App Store screenshot specifications.
+- **Output**: Benefit headlines, screenshot specs, design guidelines
 
-### Phase 1: RECALL
-
-Check memory for existing app data:
-
-```
-list_memories() → Look for:
-- App name, category, features
-- Previous listings
-- Keyword research
-- Competitor analysis
-```
-
-**If data exists:**
-```
-📱 Current Listing for [App Name]:
-✅ Title: [title]
-✅ Subtitle: [subtitle]
-✅ Keywords: [keywords]
-⏳ Description: [status]
-
-What would you like to do?
-1. Regenerate everything
-2. Update specific field
-3. Refine existing listing
-4. Run full audit
-```
-
-**If no data:** Proceed to input collection.
+### 6. SETUP MODE (`/aso-setup`)
+Configure credentials and authentication.
+- **Output**: API Key created, p8 downloaded, Blitz configured
 
 ---
 
-### Phase 2: INPUT COLLECTION
+## AUTHENTICATION
 
-Gather essential app details:
-
-```yaml
-required:
-  - app_name: "What is your app called?"
-  - app_function: "What does it do? (1-2 sentences)"
-  - target_audience: "Who is it for?"
-  - key_features: "Top 3-5 features"
-  - platform: "Apple, Google, or both?"
-
-optional:
-  - competitors: "Main competitors (we can auto-discover)"
-  - keywords: "Seed keywords (we can research)"
-  - tone: "minimal | professional | fun | premium"
-  - launch_date: "Target launch date"
-```
-
-**MCP Integration Check:**
-```
-If user mentions Astro or wants real-time ASO data:
-→ "Do you have Astro MCP configured? It provides real-time rankings and keyword suggestions."
-→ If yes: Use Astro MCP tools (list_apps, get_app_keywords, search_rankings)
-→ If no: Continue with iTunes API + estimation
-```
-
----
-
-### Phase 3: RESEARCH (Audit Mode)
-
-#### Data Fetching Priority:
-1. **iTunes Search API** (free, official)
-2. **WebFetch scraping** (fallback)
-3. **Astro MCP** (if available)
-4. **User-provided data** (last resort)
-
-#### Competitor Analysis:
+### Check Session
 ```bash
-# Fetch top 5 competitors
-curl -s "https://itunes.apple.com/search?term=[category]&entity=software&limit=10"
+test -f ~/.blitz/asc-agent/web-session.json && echo "✅ Session exists" || echo "❌ No session"
 ```
 
-Extract:
-- App titles and subtitles
-- Keywords used in descriptions
-- Ratings and review counts
-- Visual asset strategies
+### If No Session
+Call the `asc_web_auth` MCP tool to open Apple ID login in Blitz.
 
-#### Keyword Research:
-```yaml
-primary_keywords:
-  - High relevance to app features
-  - Moderate-high search volume
-  - Place in: title, subtitle
-
-secondary_keywords:
-  - Supporting relevance
-  - Lower competition
-  - Place in: keyword field, description
-
-long_tail_keywords:
-  - 3+ word phrases
-  - Low competition
-  - High conversion potential
+Or ask user to run:
+```bash
+asc web auth login --apple-id "EMAIL"
 ```
+
+### API Key Setup (for CLI auth)
+If user needs API key for CI/CD or CLI:
+1. Ask for key name
+2. Use iris API to create key with Admin permissions
+3. Download one-time .p8 private key
+4. Save to `~/.blitz/AuthKey_{KEY_ID}.p8`
+5. Call `asc_set_credentials` MCP tool to pre-fill form
 
 ---
 
-### Phase 4: GENERATION
+## MULTI-LANGUAGE METADATA
 
-Generate ALL fields in one pass with strict validation:
-
-#### Apple App Store:
-```yaml
-title:
-  max_chars: 30
-  rules:
-    - Start with strongest keyword
-    - Include brand name if space
-    - No special characters except hyphen
-  example: "TaskFlow - AI Task Manager"
-
-subtitle:
-  max_chars: 30
-  rules:
-    - Use supporting keywords
-    - NO duplication from title
-    - Benefit-focused
-  example: "Smart Productivity & Focus"
-
-promotional_text:
-  max_chars: 170
-  rules:
-    - Editable without app update
-    - Highlight current promotion/feature
-    - Call to action
-  example: "NEW: AI-powered task prioritization. Try Smart Focus mode free for 7 days!"
-
-keywords:
-  max_chars: 100
-  rules:
-    - Comma-separated, NO spaces after commas
-    - NO duplicates from title/subtitle
-    - NO plurals (Apple handles)
-    - NO brand names of competitors
-  example: "productivity,organize,planner,schedule,reminder,goals,habits,workflow,projects"
-
-description:
-  max_chars: 4000
-  structure:
-    - Hook (problem + solution) - 2-3 lines
-    - Key Features (bullet points) - 5-7 items
-    - Benefits section - 3-4 paragraphs
-    - Social proof (if available)
-    - Call to action
-  rules:
-    - Include app name in quotes 3-5 times
-    - Natural keyword integration
-    - NO keyword stuffing
-    - Simple, clear language
-
-whats_new:
-  max_chars: 4000
-  rules:
-    - List actual changes
-    - User-benefit focused
-    - Version number reference
+### Supported Locales
+```
+en-GB, en-US, tr, de-DE, fr-FR, es-ES, es-MX, it, pt-BR, pt-PT,
+ja, ko, zh-Hans, zh-Hant, nl-NL, sv, da, fi, nb, ru, pl, ar, th, vi, id, ms
 ```
 
-#### Google Play Store:
-```yaml
-title:
-  max_chars: 50
-  rules:
-    - More space than Apple - use it
-    - Primary + secondary keyword
-  example: "TaskFlow: AI Task Manager & Productivity Planner"
+### Generate for Any Language
+When user requests languages:
+1. Generate metadata for each locale
+2. Validate character limits per locale
+3. Save to `outputs/{app}/02-metadata/localized/{locale}-apple-metadata.md`
 
-short_description:
-  max_chars: 80
-  rules:
-    - Appears in search results
-    - Compelling hook
-    - Key differentiator
-  example: "AI-powered task management. Prioritize smarter, achieve more. Try free!"
+### Push to App Store Connect
+Use Blitz CLI:
+```bash
+# Pull current structure
+asc metadata pull --app "APP_ID" --version "1.0" --dir ./metadata
 
-full_description:
-  max_chars: 4000
-  rules:
-    - Keywords ARE indexed (no separate field)
-    - Front-load important keywords
-    - Use formatting (bullets, sections)
-    - Include all relevant keywords naturally
+# Create locale files in Blitz format:
+# ./metadata/app-info/{locale}.json → name, subtitle, privacyPolicyUrl
+# ./metadata/version/1.0/{locale}.json → description, keywords, promotionalText, supportUrl, marketingUrl
+
+# Push all locales
+asc metadata push --app "APP_ID" --version "1.0" --dir ./metadata --dry-run
+asc metadata push --app "APP_ID" --version "1.0" --dir ./metadata
 ```
 
----
-
-### Phase 5: VALIDATION
-
-Before output, validate:
-
-```python
-# Character limit checks
-assert len(apple_title) <= 30, f"Apple title too long: {len(apple_title)}/30"
-assert len(apple_subtitle) <= 30, f"Subtitle too long: {len(apple_subtitle)}/30"
-assert len(apple_keywords) <= 100, f"Keywords too long: {len(apple_keywords)}/100"
-assert len(apple_description) <= 4000
-assert len(google_title) <= 50
-assert len(google_short) <= 80
-
-# Duplication checks
-title_words = set(apple_title.lower().split())
-subtitle_words = set(apple_subtitle.lower().split())
-keyword_words = set(apple_keywords.lower().replace(',', ' ').split())
-
-assert not (title_words & subtitle_words), "Duplicate words in title/subtitle"
-assert not (title_words & keyword_words), "Title words in keyword field"
-assert not (subtitle_words & keyword_words), "Subtitle words in keyword field"
-```
-
----
-
-### Phase 6: OUTPUT
-
-#### Quick Mode Output:
+### Blitz Metadata Format
+**app-info/{locale}.json:**
 ```json
 {
-  "platform": "apple",
-  "metadata": {
-    "title": "TaskFlow - AI Task Manager",
-    "title_chars": "28/30",
-    "subtitle": "Smart Productivity & Focus",
-    "subtitle_chars": "26/30",
-    "promotional_text": "...",
-    "keywords": "productivity,organize,planner,...",
-    "keywords_chars": "95/100",
-    "description": "...",
-    "description_chars": "2847/4000"
-  },
-  "validation": {
-    "no_duplicates": true,
-    "within_limits": true,
-    "keyword_coverage": "12 unique keywords"
+  "name": "App Title",
+  "subtitle": "App Subtitle",
+  "privacyPolicyUrl": "https://..."
+}
+```
+
+**version/{version}/{locale}.json:**
+```json
+{
+  "description": "Full description...",
+  "keywords": "keyword1,keyword2,keyword3",
+  "promotionalText": "Promo text...",
+  "marketingUrl": "https://...",
+  "supportUrl": "https://..."
+}
+```
+
+---
+
+## IN-APP PURCHASES & SUBSCRIPTIONS
+
+### List Existing IAPs
+```bash
+asc iaps list --app "APP_ID"
+asc subscriptions list --app "APP_ID"
+```
+
+### Create IAP (via iris API)
+Use the `asc-iap-attach` skill workflow:
+1. Check web session exists
+2. List current IAPs/subscriptions
+3. Identify items in `READY_TO_SUBMIT` state
+4. Attach to version via iris API
+
+### Attach IAPs to Version
+For subscriptions:
+```python
+# POST to https://appstoreconnect.apple.com/iris/v1/subscriptionSubmissions
+{
+  "data": {
+    "type": "subscriptionSubmissions",
+    "attributes": {"submitWithNextAppStoreVersion": true},
+    "relationships": {
+      "subscription": {"data": {"type": "subscriptions", "id": "SUB_ID"}}
+    }
   }
 }
 ```
 
-#### Audit Mode Output:
-```
-outputs/[app-name]/
-├── 00-MASTER-ACTION-PLAN.md
-├── 01-research/
-│   ├── keyword-list.md
-│   ├── competitor-analysis.md
-│   └── market-gaps.md
-├── 02-metadata/
-│   ├── apple-metadata.md
-│   ├── google-metadata.md
-│   └── visual-assets-spec.md
-├── 03-launch/
-│   ├── prelaunch-checklist.md
-│   └── timeline.md
-└── 04-optimization/
-    ├── review-templates.md
-    └── ongoing-tasks.md
+For in-app purchases:
+```python
+# POST to https://appstoreconnect.apple.com/iris/v1/inAppPurchaseSubmissions
+{
+  "data": {
+    "type": "inAppPurchaseSubmissions",
+    "attributes": {"submitWithNextAppStoreVersion": true},
+    "relationships": {
+      "inAppPurchaseV2": {"data": {"type": "inAppPurchases", "id": "IAP_ID"}}
+    }
+  }
+}
 ```
 
 ---
 
-## ITERATION & REFINEMENT
+## PRIVACY LABELS
 
-After generation, ask:
-```
-📝 Listing generated! Would you like to:
-1. Adjust tone (more professional/casual/premium)
-2. Target different keywords
-3. Emphasize specific features
-4. Regenerate a specific field
-5. Save to memory and proceed
-```
-
-Handle refinement requests:
-- "Make it more premium" → Elevate language, remove casual phrases
-- "Target beginners" → Simplify, emphasize ease-of-use
-- "Focus on AI features" → Highlight AI in title/subtitle, expand in description
-
----
-
-## MEMORY PERSISTENCE
-
-Save approved listing:
-```
-write_memory("aso_[app_name]", {
-  "app_name": "...",
-  "category": "...",
-  "features": [...],
-  "platform": "...",
-  "metadata": {...},
-  "keywords_researched": [...],
-  "competitors_analyzed": [...],
-  "last_updated": "2026-..."
-})
+### No Data Collected
+```bash
+cat > /tmp/privacy.json << 'EOF'
+{"schemaVersion": 1, "dataUsages": []}
+EOF
+asc web privacy apply --app "APP_ID" --file /tmp/privacy.json --allow-deletes --confirm
+asc web privacy publish --app "APP_ID" --confirm
 ```
 
----
-
-## APP STORE CONNECT INTEGRATION
-
-### Privacy Nutrition Labels (Submit Mode):
-```yaml
-workflow:
-  1. Check web session: ~/.blitz/asc-agent/web-session.json
-  2. If missing: Call asc_web_auth MCP tool
-  3. Analyze app for data collection
-  4. Generate privacy.json declaration
-  5. Preview: asc web privacy plan --app APP_ID
-  6. Apply: asc web privacy apply --app APP_ID
-  7. Publish: asc web privacy publish --app APP_ID
+### Basic Analytics (Crash Data Only)
+```json
+{
+  "schemaVersion": 1,
+  "dataUsages": [
+    {
+      "category": "CRASH_DATA",
+      "purposes": ["ANALYTICS"],
+      "dataProtections": ["DATA_NOT_LINKED_TO_YOU"]
+    }
+  ]
+}
 ```
 
-### Metadata Submission:
-```yaml
-workflow:
-  1. Validate all metadata within limits
-  2. Connect to App Store Connect
-  3. Update app info localizations
-  4. Update version localizations
-  5. Verify changes applied
+### User Accounts + Analytics
+```json
+{
+  "schemaVersion": 1,
+  "dataUsages": [
+    {"category": "NAME", "purposes": ["APP_FUNCTIONALITY"], "dataProtections": ["DATA_LINKED_TO_YOU"]},
+    {"category": "EMAIL_ADDRESS", "purposes": ["APP_FUNCTIONALITY"], "dataProtections": ["DATA_LINKED_TO_YOU"]},
+    {"category": "USER_ID", "purposes": ["APP_FUNCTIONALITY"], "dataProtections": ["DATA_LINKED_TO_YOU"]},
+    {"category": "CRASH_DATA", "purposes": ["ANALYTICS"], "dataProtections": ["DATA_NOT_LINKED_TO_YOU"]}
+  ]
+}
+```
+
+### Workflow
+```bash
+# Preview
+asc web privacy plan --app "APP_ID" --file /tmp/privacy.json --pretty
+
+# Apply
+asc web privacy apply --app "APP_ID" --file /tmp/privacy.json --allow-deletes --confirm
+
+# Publish (required!)
+asc web privacy publish --app "APP_ID" --confirm
+
+# Verify
+asc web privacy pull --app "APP_ID" --pretty
 ```
 
 ---
 
-## WRITING STYLE RULES
+## CHARACTER LIMITS
 
-1. **Natural language** - Avoid AI-sounding phrases
-2. **Benefit-focused** - Features → Benefits
-3. **Clear and concise** - No fluff or filler
-4. **Consistent tone** - Match app personality
-5. **No superlatives** - Avoid "best", "amazing", "revolutionary"
-6. **Action-oriented** - Use active voice
+### Apple App Store
+| Field | Limit | Notes |
+|-------|-------|-------|
+| Title | 30 | Primary keyword |
+| Subtitle | 30 | NO overlap with title |
+| Promo Text | 170 | Editable without update |
+| Keywords | 100 | Comma-separated, NO spaces |
+| Description | 4000 | Include app name 3-5x |
 
-**Avoid:**
-- "Unleash your potential"
-- "Revolutionary new way"
-- "Best-in-class"
-- "Seamlessly integrated"
+### Google Play Store
+| Field | Limit | Notes |
+|-------|-------|-------|
+| Title | 50 | More keywords allowed |
+| Short Desc | 80 | Shows in search |
+| Full Desc | 4000 | Keywords ARE indexed |
 
-**Prefer:**
-- "Get more done in less time"
-- "Manage tasks with AI assistance"
-- "Works with your calendar"
-- "Built for busy professionals"
+### Validation Rules
+- Words in title CANNOT appear in subtitle
+- Words in title/subtitle CANNOT appear in keywords field
+- NO spaces after commas in keywords
+- NO plurals (Apple handles automatically)
 
 ---
 
-## ASTRO MCP INTEGRATION (Optional)
+## BLITZ CLI REFERENCE
 
-When Astro MCP is available:
-```yaml
-tools:
-  - list_apps: Get user's apps
-  - get_app_keywords: Current keyword rankings
-  - search_rankings: Track keyword positions (includeHistory: true)
-  - get_app_ratings: Rating trends (includeHistory: true)
-  - extract_competitors_keywords: Competitor keyword analysis
-  - search_app_store: Search for apps
-  - get_keyword_suggestions: AI-powered suggestions
+### Authentication
+```bash
+asc auth status                    # Check auth
+asc web auth login --apple-id X    # Web session login
 ```
 
-**Note:** Astro MCP is beta. Always verify strategic decisions.
+### Apps
+```bash
+asc apps list                      # List all apps
+asc apps view --app "APP_ID"       # View app details
+```
+
+### Metadata
+```bash
+asc metadata pull --app X --version Y --dir ./metadata
+asc metadata push --app X --version Y --dir ./metadata
+asc metadata keywords import --dir ./metadata --locale en-US --input keywords.csv
+```
+
+### Localizations
+```bash
+asc localizations list --version "VERSION_ID"
+asc localizations create --version "VERSION_ID" --locale "ja"
+asc localizations upload --version "VERSION_ID" --path ./localizations
+```
+
+### Screenshots
+```bash
+asc screenshots list --app "APP_ID"
+asc screenshots upload --localization-id X --display-type "APP_IPHONE_67" --path ./screenshots/
+```
+
+### Privacy
+```bash
+asc web privacy plan --app X --file privacy.json --pretty
+asc web privacy apply --app X --file privacy.json --allow-deletes --confirm
+asc web privacy publish --app X --confirm
+```
+
+### IAPs & Subscriptions
+```bash
+asc iaps list --app "APP_ID"
+asc subscriptions list --app "APP_ID"
+```
+
+---
+
+## WORKFLOW EXAMPLES
+
+### Full Submission Flow
+```
+1. /aso-audit AppName          → Research + metadata
+2. /aso AppName --languages tr,de,fr,ja,ko  → Generate localized metadata
+3. /aso-iap AppName            → Set up IAPs
+4. /aso-submit AppName         → Push everything to ASC
+```
+
+### Quick Metadata Update
+```
+1. /aso AppName                → Generate English metadata
+2. Copy-paste to ASC manually
+```
+
+### Multi-Language Push
+```
+1. Generate metadata for all locales
+2. Convert to Blitz format (app-info/*.json, version/*/*.json)
+3. asc metadata push --app X --version Y --dir ./metadata
+```
+
+---
+
+## AGENT BEHAVIOR
+
+1. **Always check session first** before any ASC operation
+2. **Never print cookies** - all scripts handle auth internally
+3. **Validate limits** before outputting any metadata
+4. **Ask user for languages** if not specified (default: English only)
+5. **Use Blitz CLI** for metadata push, NOT manual copy-paste
+6. **Preview before apply** - show diffs to user
+7. **Publish after apply** - changes aren't live until published
+
+---
+
+## CREDENTIAL REQUIREMENTS
+
+If user asks about credentials:
+
+| Operation | Requires |
+|-----------|----------|
+| Metadata pull/push | Web session |
+| Privacy labels | Web session |
+| IAP attach | Web session |
+| API Key create | Web session + Admin role |
+| CI/CD auth | API Key (.p8 file) |
+
+To get web session:
+```
+Call asc_web_auth MCP tool
+```
+
+To create API key:
+```
+/aso-setup → Creates key, downloads .p8, configures Blitz
+```
 
 ---
 
 ## QUICK REFERENCE
 
-### Character Limits:
-| Field | Apple | Google |
-|-------|-------|--------|
-| Title | 30 | 50 |
-| Subtitle/Short | 30 | 80 |
-| Promo Text | 170 | - |
-| Keywords | 100 | (in description) |
-| Description | 4000 | 4000 |
+| Command | What It Does |
+|---------|--------------|
+| `/aso` | Quick metadata generation |
+| `/aso-audit` | Full research + competitor analysis |
+| `/aso-submit` | Push to App Store Connect |
+| `/aso-iap` | Set up IAPs & subscriptions |
+| `/aso-screenshots` | Screenshot specifications |
+| `/aso-setup` | Configure credentials |
 
-### Keyword Rules:
-- NO spaces after commas (Apple)
-- NO plurals - Apple handles
-- NO competitor brand names
-- NO duplicates across fields
-
-### Priority Order:
-1. Title (highest weight)
-2. Subtitle (high weight)
-3. Keyword field (medium weight)
-4. Description (lower but indexed)
-
----
-
-## EXAMPLES
-
-### Quick Mode:
-```
-User: /aso
-
-Claude: 📱 Let's optimize your App Store listing!
-
-What's your app called and what does it do?
-
-User: FitFlow - a fitness app with AI workout plans
-
-Claude: Great! A few more questions:
-1. Who is it for? (e.g., beginners, athletes, busy professionals)
-2. Top 3 features?
-3. Target platform? (Apple, Google, both)
-
-[... continues to generation ...]
-```
-
-### Audit Mode:
-```
-User: /aso-audit FitFlow
-
-Claude: 🔍 Starting full ASO audit for FitFlow...
-
-Phase 1: Research
-✓ Fetching competitor data from iTunes API
-✓ Analyzing top 5 fitness apps
-✓ Identifying keyword opportunities
-
-Phase 2: Optimization
-✓ Generating Apple metadata (validated)
-✓ Generating Google metadata (validated)
-
-Phase 3: Strategy
-✓ Creating launch checklist
-✓ Building timeline
-
-📁 Audit complete! Check outputs/FitFlow/
-```
-
----
-
-**Remember:** Every output must be copy-paste ready. Every recommendation must be actionable. Every character count must be validated.
+**Remember:** All metadata must be copy-paste ready. All limits must be validated. All changes need user confirmation before applying.
