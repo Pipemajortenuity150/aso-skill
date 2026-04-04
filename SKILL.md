@@ -75,7 +75,13 @@ Generate legal documents for your app.
 - **Output**: Privacy Policy, Terms of Use, EULA
 - **Compliance**: GDPR, CCPA, Apple guidelines
 
-### 15. SYNC MODE (`/aso-sync`)
+### 15. BUILD MODE (`/aso-build`)
+Build, archive and upload using XcodeBuildMCP.
+- **Output**: Build, archive, upload to ASC
+- **Requires**: XcodeBuildMCP installed
+- **Features**: Simulator/device builds, archive, upload
+
+### 16. SYNC MODE (`/aso-sync`)
 Sync IAP/Subscriptions between Project, App Store Connect, and RevenueCat.
 - **Output**: Products synced across all platforms
 - **Sources**: StoreKit config, Swift files
@@ -511,6 +517,7 @@ pip3 install PyJWT cryptography
 | `/aso-whatsnew` | Generate release notes |
 | `/aso-reviews` | Review management + AI responses |
 | `/aso-legal` | Privacy Policy, Terms, EULA |
+| `/aso-build` | Xcode build, archive, upload |
 | `/aso-sync` | Project-ASC-RevenueCat sync |
 | `/aso-setup` | Configure credentials |
 | `/aso-status` | Check submission readiness |
