@@ -9,29 +9,29 @@ Check App Store Connect submission readiness.
 ## Output Example
 
 ```
-📱 Submission Readiness - GRW
+📱 Submission Readiness - MyApp
 
 App Identity
 ────────────────────────────────────────
-  App Name:         GRW - AI Watermark Remover
-  Bundle ID:        com.furkancingoz.gwr
+  App Name:         MyApp - Smart Photo Editor
+  Bundle ID:        com.example.myapp
   App ID:           6761651599
   Primary Locale:   en-GB
 
 Version 1.0 - PREPARE_FOR_SUBMISSION
 ────────────────────────────────────────
 
-✅ App Name              GRW - AI Watermark Remover
+✅ App Name              MyApp - Smart Photo Editor
 ✅ Description           1,794 characters
 ✅ Keywords              99/100 characters
-✅ Support URL           https://furkancingoz.com/grw
-✅ Privacy Policy URL    https://furkancingoz.com/grw/privacy
-✅ Copyright             2026 Furkan Cingöz
+✅ Support URL           https://example.com/myapp
+✅ Privacy Policy URL    https://example.com/myapp/privacy
+✅ Copyright             2026 Your Company
 ✅ Content Rights        DOES_NOT_USE_THIRD_PARTY_CONTENT
 ✅ Primary Category      PHOTO_AND_VIDEO
 ✅ Age Rating            Configured
 ✅ Pricing               Free
-✅ Review Contact        Furkan Cingöz
+✅ Review Contact        Your Name
 ✅ App Icon              Configured
 ✅ iPhone Screenshots    5 screenshot(s)
 ❌ iPad Screenshots      Missing → Fix

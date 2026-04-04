@@ -297,14 +297,14 @@ claude mcp add --transport http revenuecat https://mcp.revenuecat.ai/mcp --heade
 ## Output Example
 
 ```
-🔄 Syncing GRW...
+🔄 Syncing MyApp...
 ══════════════════════════════════════════════════
 
 📂 Phase 1: Scanning project...
    Found 3 product(s)
-   - com.furkancingoz.grw.credits.50 (consumable)
-   - com.furkancingoz.grw.pro.monthly (auto-renewable)
-   - com.furkancingoz.grw.pro.yearly (auto-renewable)
+   - com.example.myapp.credits.50 (consumable)
+   - com.example.myapp.pro.monthly (auto-renewable)
+   - com.example.myapp.pro.yearly (auto-renewable)
 
 🍎 Phase 2: Syncing to App Store Connect...
    ✅ Created: 3

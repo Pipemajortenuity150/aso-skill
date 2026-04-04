@@ -228,23 +228,23 @@ Checks all required items for App Store submission:
 ### Output Example
 
 ```
-📱 Submission Readiness - GRW
+📱 Submission Readiness - MyApp
 
 App Identity
 ────────────────────────────────────────
-  App Name:         GRW - AI Watermark Remover
-  Bundle ID:        com.furkancingoz.gwr
+  App Name:         MyApp - Smart Photo Editor
+  Bundle ID:        com.example.myapp
   App ID:           6761651599
   Primary Locale:   en-GB
 
 Version 1.0 - PREPARE_FOR_SUBMISSION
 ────────────────────────────────────────
 
-✅ App Name              GRW - AI Watermark Remover
+✅ App Name              MyApp - Smart Photo Editor
 ✅ Description           1,794 characters
 ✅ Keywords              99/100 characters
-✅ Support URL           https://furkancingoz.com/grw
-✅ Privacy Policy URL    https://furkancingoz.com/grw/privacy
+✅ Support URL           https://example.com/myapp
+✅ Privacy Policy URL    https://example.com/myapp/privacy
 ❌ iPad Screenshots      Missing → Fix
 ⚠️ Privacy Labels        Not published → Open in Web
 ❌ Build                 Not attached → Fix
@@ -342,14 +342,14 @@ Subscriptions:
 ### Output Example
 
 ```
-🔄 Syncing GRW...
+🔄 Syncing MyApp...
 ══════════════════════════════════════════════════
 
 📂 Phase 1: Scanning project...
    Found 3 product(s)
-   - com.furkancingoz.grw.credits.50 (consumable)
-   - com.furkancingoz.grw.pro.monthly (auto-renewable)
-   - com.furkancingoz.grw.pro.yearly (auto-renewable)
+   - com.example.myapp.credits.50 (consumable)
+   - com.example.myapp.pro.monthly (auto-renewable)
+   - com.example.myapp.pro.yearly (auto-renewable)
 
 🍎 Phase 2: Syncing to App Store Connect...
    ✅ Created: 3

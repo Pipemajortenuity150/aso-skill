@@ -211,14 +211,14 @@ def check_submission_readiness(app_id, token):
 
 ### Display Format
 ```
-📱 Submission Readiness - GRW
+📱 Submission Readiness - MyApp
 
-✅ App Name: GRW - AI Watermark Remover
+✅ App Name: MyApp - Smart Photo Editor
 ✅ Description: 1,794 chars
 ✅ Keywords: 99/100 chars
-✅ Support URL: https://furkancingoz.com/grw
-✅ Privacy Policy URL: https://furkancingoz.com/grw/privacy
-✅ Copyright: 2026 Furkan Cingöz
+✅ Support URL: https://example.com/myapp
+✅ Privacy Policy URL: https://example.com/myapp/privacy
+✅ Copyright: 2026 Your Company
 ✅ Content Rights: DOES_NOT_USE_THIRD_PARTY_CONTENT
 ✅ Primary Category: PHOTO_AND_VIDEO
 ✅ Age Rating: Configured
