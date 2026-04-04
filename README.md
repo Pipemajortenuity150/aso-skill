@@ -4,10 +4,14 @@
 
 ![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Open Source](https://img.shields.io/badge/Open_Source-100%25-brightgreen.svg)
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Compatible-purple.svg)
 ![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20Android-orange.svg)
+[![GitHub stars](https://img.shields.io/github/stars/furkancingoz/aso-skill?style=social)](https://github.com/furkancingoz/aso-skill)
 
-**The most comprehensive ASO toolkit for Claude Code**
+**100% Open Source ASO toolkit for Claude Code**
+
+*No subscriptions. No API keys required. No hidden costs.*
 
 [Features](#-features) • [Installation](#-installation) • [Quick Start](#-quick-start) • [Commands](#-commands) • [Workflows](#-workflows)
 
@@ -17,12 +21,21 @@
 
 ## 📋 Overview
 
-**ASO Skill** is a complete App Store Optimization toolkit for Claude Code. Generate metadata, analyze competitors, create screenshots, manage versions, and submit to App Store Connect - all with 6 simple commands.
+**ASO Skill** is a **completely free and open source** App Store Optimization toolkit for Claude Code. Generate metadata, analyze competitors, create screenshots, manage versions, and submit to App Store Connect - all with 6 simple commands.
+
+### 🆓 Why Open Source?
+
+- **No monthly fees** - Unlike AppTweak, Sensor Tower, or ASOTools
+- **No API limits** - Use as much as you want
+- **Full transparency** - See exactly how it works
+- **Community driven** - Contribute and improve together
+- **Self-hosted** - Your data stays with you
 
 ### 🎯 What Makes This Different
 
 | Feature | Traditional ASO Tools | ASO Skill |
 |---------|----------------------|-----------|
+| **Price** | $50-500/month | **Free forever** |
 | Metadata Generation | Manual writing | AI-powered, character-validated |
 | Competitor Analysis | Expensive subscriptions | Free iTunes API integration |
 | Screenshots | Design software needed | AI-generated with Gemini MCP |
