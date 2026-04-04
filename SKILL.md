@@ -53,7 +53,13 @@ Configure credentials and authentication.
 Check submission readiness.
 - **Output**: Complete checklist of what's done and what's missing
 
-### 10. SYNC MODE (`/aso-sync`)
+### 11. LOCALIZE MODE (`/aso-localize`)
+Translate Xcode .xcstrings files using AI.
+- **Output**: Translated strings in target languages
+- **Features**: Batch translation, context-aware, preserves placeholders
+- **Supports**: 70+ languages
+
+### 12. SYNC MODE (`/aso-sync`)
 Sync IAP/Subscriptions between Project, App Store Connect, and RevenueCat.
 - **Output**: Products synced across all platforms
 - **Sources**: StoreKit config, Swift files
@@ -484,7 +490,8 @@ pip3 install PyJWT cryptography
 | `/aso-submit` | Push to App Store Connect |
 | `/aso-iap` | IAP & Subscription setup |
 | `/aso-screenshots` | Screenshot generation + upload |
-| `/aso-version` | Version & build management |
+| `/aso-version` | Version, build & review submission |
+| `/aso-localize` | .xcstrings AI translation |
 | `/aso-sync` | Project-ASC-RevenueCat sync |
 | `/aso-setup` | Configure credentials |
 | `/aso-status` | Check submission readiness |

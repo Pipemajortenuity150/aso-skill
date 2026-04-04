@@ -226,9 +226,89 @@ Another version is already in review. Wait for it to complete or cancel it.
 
 ---
 
+---
+
+## Pre-Submission Checklist
+
+Before calling `submit_for_review()`:
+
+```python
+def pre_submission_check(app_id: str, version_id: str, client: ASCClient) -> dict:
+    """Run all pre-submission validations."""
+    checks = {}
+
+    # 1. Build attached?
+    version = client.get_version(version_id)
+    build_rel = version["data"].get("relationships", {}).get("build", {})
+    checks["build_attached"] = build_rel.get("data") is not None
+
+    # 2. Metadata complete?
+    locs = client.get_version_localizations(version_id)
+    for loc in locs:
+        attrs = loc["attributes"]
+        locale = attrs["locale"]
+        checks[f"description_{locale}"] = bool(attrs.get("description"))
+        checks[f"keywords_{locale}"] = bool(attrs.get("keywords"))
+
+    # 3. Screenshots uploaded?
+    for loc in locs:
+        ss_sets = client.get_screenshot_sets(loc["id"])
+        has_iphone = any(
+            "IPHONE" in s["attributes"]["screenshotDisplayType"]
+            for s in ss_sets
+        )
+        checks[f"screenshots_{loc['attributes']['locale']}"] = has_iphone
+
+    return checks
+
+# Usage
+checks = pre_submission_check(app_id, version_id, client)
+failed = [k for k, v in checks.items() if not v]
+if failed:
+    print(f"❌ Missing: {failed}")
+else:
+    print("✅ Ready to submit!")
+    client.submit_for_review(version_id)
+```
+
+---
+
+## Phased Release
+
+Enable gradual rollout (7 days: 1% → 100%):
+
+```python
+# Enable phased release
+client.create_phased_release(version_id)
+
+# Pause (hold at current %)
+client.update_phased_release(phased_id, "PAUSED")
+
+# Resume
+client.update_phased_release(phased_id, "ACTIVE")
+
+# Complete (release to 100% immediately)
+client.update_phased_release(phased_id, "COMPLETE")
+```
+
+### Phased Release Schedule
+
+| Day | Percentage |
+|-----|------------|
+| 1 | 1% |
+| 2 | 2% |
+| 3 | 5% |
+| 4 | 10% |
+| 5 | 20% |
+| 6 | 50% |
+| 7 | 100% |
+
+---
+
 ## Agent Notes
 
 - Always check `/aso-status` before submitting
 - Only VALID builds can be attached
 - One version can be in review at a time
 - Phased release is optional but recommended for major updates
+- Review typically takes 24-48 hours (can be faster or slower)
