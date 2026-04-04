@@ -12,6 +12,7 @@ Complete guide to using ASO Skill for App Store Optimization.
 | `/aso-audit` | Full analysis | 20-30 min |
 | `/aso-submit` | ASC submission | 5-10 min |
 | `/aso-iap` | IAP setup | 5-10 min |
+| `/aso-sync` | Project-ASC-RC sync | 2-5 min |
 | `/aso-setup` | Configure credentials | 2 min |
 | `/aso-status` | Check readiness | 1 min |
 | `/aso-screenshots` | Generate screenshots | 15-30 min |
@@ -312,11 +313,65 @@ Subscriptions:
 ├── credentials.json    # API Key info
 ├── AuthKey_XXXX.p8     # Private key file
 └── web-session.json    # Optional: for iris API
+
+# RevenueCat: Uses MCP server (no local file)
 ```
 
 ---
 
-## Command 7: `/aso-screenshots` - Screenshot Generation
+## Command 7: `/aso-sync` - Product Sync
+
+### Prerequisites
+
+- App Store Connect API Key configured
+- RevenueCat MCP installed (optional)
+
+### Basic Usage
+
+```
+/aso-sync
+/aso-sync MyApp --app-id 1234567890
+```
+
+### What It Does
+
+1. **Scans project** for IAP definitions (StoreKit config, Swift files)
+2. **Creates products** in App Store Connect
+3. **Syncs to RevenueCat** (via MCP) - products, entitlements, offerings
+
+### Output Example
+
+```
+🔄 Syncing GRW...
+══════════════════════════════════════════════════
+
+📂 Phase 1: Scanning project...
+   Found 3 product(s)
+   - com.furkancingoz.grw.credits.50 (consumable)
+   - com.furkancingoz.grw.pro.monthly (auto-renewable)
+   - com.furkancingoz.grw.pro.yearly (auto-renewable)
+
+🍎 Phase 2: Syncing to App Store Connect...
+   ✅ Created: 3
+
+🐱 Phase 3: Syncing to RevenueCat (via MCP)...
+   ✅ Products: 3
+   ✅ Entitlements: 1 (pro)
+   ✅ Offering: default
+
+══════════════════════════════════════════════════
+✅ Sync complete!
+```
+
+### RevenueCat MCP Setup
+
+```bash
+claude mcp add --transport http revenuecat https://mcp.revenuecat.ai/mcp --header "Authorization: Bearer YOUR_V2_API_KEY"
+```
+
+---
+
+## Command 8: `/aso-screenshots` - Screenshot Generation
 
 ### Prerequisites
 

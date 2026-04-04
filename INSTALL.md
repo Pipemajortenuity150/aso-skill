@@ -137,6 +137,32 @@ Testing ASC API Client...
 
 ---
 
+## RevenueCat MCP Setup (Optional)
+
+For `/aso-sync` to sync products to RevenueCat:
+
+### Step 1: Get V2 API Key
+
+1. Go to https://app.revenuecat.com
+2. Select your project
+3. Go to **API Keys**
+4. Create new **V2 Secret Key** (with write access)
+5. Copy the key
+
+### Step 2: Install MCP Server
+
+```bash
+claude mcp add --transport http revenuecat https://mcp.revenuecat.ai/mcp --header "Authorization: Bearer YOUR_V2_API_KEY"
+```
+
+### Step 3: Verify
+
+```
+"Show me my RevenueCat project details"
+```
+
+---
+
 ## Optional Dependencies
 
 ### Screenshot Generation

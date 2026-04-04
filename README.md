@@ -143,7 +143,9 @@ For screenshot generation, install **SF Pro Display Black**:
 | `/aso-submit [app-name]` | Push to App Store Connect (metadata, privacy, screenshots) |
 | `/aso-iap [app-name]` | Set up IAPs & Subscriptions |
 | `/aso-screenshots` | Generate App Store screenshot specifications |
-| `/aso-sync` | Sync IAPs between Project, ASC, and RevenueCat |
+| `/aso-sync` | Sync IAPs between Project, ASC, and RevenueCat MCP |
+| `/aso-setup` | Configure API credentials |
+| `/aso-status` | Check submission readiness |
 | `/aso-setup` | Configure credentials (API key, web session) |
 
 ---
@@ -302,6 +304,11 @@ aso-skill/
 - Direct submission via ASC API
 - Privacy labels configuration
 - JWT authentication (API Key)
+
+### RevenueCat MCP
+- Official cloud-hosted MCP server
+- Product, entitlement, offering management
+- Natural language commands
 
 ---
 

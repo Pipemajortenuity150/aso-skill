@@ -69,6 +69,9 @@ All credentials stored at `~/.aso/`:
 ├── credentials.json    # API Key (issuerId, keyId, privateKeyPath)
 ├── AuthKey_XXXX.p8     # Private key file
 └── web-session.json    # Optional: for iris API features
+
+# RevenueCat: Uses MCP server (cloud-hosted, no local file)
+# Install: claude mcp add --transport http revenuecat https://mcp.revenuecat.ai/mcp --header "Authorization: Bearer V2_KEY"
 ```
 
 ### API Key Authentication
@@ -185,6 +188,7 @@ Requires Pillow: `pip install Pillow`
 | `/aso-audit` | Full ASO audit | 20-30 min |
 | `/aso-submit` | ASC submission | 5-10 min |
 | `/aso-iap` | IAP setup | 5-10 min |
+| `/aso-sync` | Project-ASC-RevenueCat sync | 2-5 min |
 | `/aso-setup` | Configure credentials | 2 min |
 | `/aso-status` | Check readiness | 1 min |
 | `/aso-screenshots` | Screenshot generation | 15-30 min |
