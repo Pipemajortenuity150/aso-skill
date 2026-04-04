@@ -4,15 +4,16 @@ This file provides guidance to Claude Code when working with this ASO skill.
 
 ## What This Is
 
-A comprehensive **App Store Optimization (ASO) skill** for Claude Code that combines:
+A comprehensive **App Store Optimization (ASO) skill** for Claude Code with 6 consolidated commands:
 
-1. **Quick Metadata Generation** (`/aso`) - Fast listing optimization
-2. **Full ASO Audit** (`/aso-audit`) - Comprehensive analysis with competitor research
-3. **App Store Connect Submission** (`/aso-submit`) - Direct ASC API integration
-4. **Submission Readiness Check** (`/aso-status`) - Verify all requirements
-5. **IAP & Subscription Setup** (`/aso-iap`) - In-app purchase configuration
-6. **Screenshot Generation** (`/aso-screenshots`) - AI-powered screenshot creation
-7. **Credential Setup** (`/aso-setup`) - Configure API authentication
+| Command | Purpose |
+|---------|---------|
+| `/aso` | Metadata generation (quick + audit + localize) |
+| `/aso-connect` | App Store Connect (setup + status + sync) |
+| `/aso-release` | Version management (create + attach + submit + notes + phased) |
+| `/aso-assets` | Assets (screenshots + iap) |
+| `/aso-manage` | Management (reviews + legal) |
+| `/aso-build` | Xcode (build + archive + upload) |
 
 ## Architecture
 
@@ -25,18 +26,16 @@ aso-skill/
 │   ├── aso-full.md       # Full audit orchestrator (opus)
 │   └── asc-api.md        # ASC API agent
 ├── commands/
-│   ├── aso.md            # /aso command
-│   ├── aso-audit.md      # /aso-audit command
-│   ├── aso-submit.md     # /aso-submit command
-│   ├── aso-iap.md        # /aso-iap command
-│   ├── aso-setup.md      # /aso-setup command
-│   ├── aso-status.md     # /aso-status command
-│   └── aso-screenshots.md # /aso-screenshots command
+│   ├── aso.md            # /aso (metadata + audit + localize)
+│   ├── aso-connect.md    # /aso-connect (setup + status + sync)
+│   ├── aso-release.md    # /aso-release (version + build + submit)
+│   ├── aso-assets.md     # /aso-assets (screenshots + iap)
+│   ├── aso-manage.md     # /aso-manage (reviews + legal)
+│   └── aso-build.md      # /aso-build (xcode)
 ├── lib/
 │   ├── itunes_api.py     # iTunes Search API client
 │   ├── keyword_engine.py # Keyword analysis engine
-│   ├── asc_api.py        # App Store Connect API client
-│   └── screenshot_composer.py # Screenshot generation
+│   └── asc_api.py        # App Store Connect API client
 └── templates/
     ├── apple-metadata.md  # Apple App Store template
     └── google-metadata.md # Google Play Store template
@@ -72,6 +71,10 @@ All credentials stored at `~/.aso/`:
 
 # RevenueCat: Uses MCP server (cloud-hosted, no local file)
 # Install: claude mcp add --transport http revenuecat https://mcp.revenuecat.ai/mcp --header "Authorization: Bearer V2_KEY"
+
+# Gemini MCP (Screenshots)
+# Install: claude mcp add gemini-mcp -s user -- npx -y @houtini/gemini-mcp
+# Set: export GEMINI_API_KEY="your_key"
 ```
 
 ### API Key Authentication
@@ -128,6 +131,31 @@ This enables resuming across conversations.
 
 ## Python Modules
 
+### asc_api.py (Primary)
+```python
+from lib.asc_api import ASCClient, generate_token
+
+token = generate_token()
+client = ASCClient(token)
+
+# Core operations
+apps = client.list_apps()
+client.create_version(app_id, "1.0.0")
+client.attach_build_to_version(version_id, build_id)
+client.submit_for_review(version_id)
+client.create_phased_release(version_id)
+
+# Metadata
+client.update_localization(loc_id, title="...", subtitle="...", keywords="...")
+
+# Screenshots
+client.create_screenshot_set(loc_id, "APP_IPHONE_67")
+client.reserve_screenshot(set_id, "01.jpg", file_size)
+client.commit_screenshot(screenshot_id, checksum)
+```
+
+Requires PyJWT: `pip3 install PyJWT cryptography`
+
 ### itunes_api.py
 ```python
 from lib.itunes_api import iTunesAPI
@@ -153,89 +181,51 @@ analysis = engine.analyze_keywords(
 
 Returns prioritized keywords with placement recommendations.
 
-### asc_api.py
-```python
-from lib.asc_api import ASCClient, generate_token
-
-token = generate_token()
-client = ASCClient(token)
-apps = client.list_apps()
-```
-
-Requires PyJWT: `pip3 install PyJWT cryptography`
-
-### screenshot_composer.py (Legacy - Optional)
-```python
-# Legacy scaffold generation - now replaced by Gemini MCP
-from lib.screenshot_composer import compose_screenshot, ScreenshotConfig
-
-config = ScreenshotConfig(
-    bg_color="#E31837",
-    verb="TRACK",
-    desc="CARD PRICES",
-    screenshot_path="simulator.png",
-    output_path="output.png"
-)
-compose_screenshot(config)
-```
-
-Optional - Gemini MCP now handles screenshot generation directly.
-
 ## Command Reference
 
-| Command | Purpose | Time |
-|---------|---------|------|
-| `/aso` | Quick metadata generation | 2-5 min |
-| `/aso-audit` | Full ASO audit | 20-30 min |
-| `/aso-submit` | ASC submission | 5-10 min |
-| `/aso-iap` | IAP setup | 5-10 min |
-| `/aso-sync` | Project-ASC-RevenueCat sync | 2-5 min |
-| `/aso-setup` | Configure credentials | 2 min |
-| `/aso-status` | Check readiness | 1 min |
-| `/aso-screenshots` | Screenshot generation | 15-30 min |
+| Command | Subcommands | Purpose |
+|---------|-------------|---------|
+| `/aso` | (default), --audit, --localize | Metadata generation & optimization |
+| `/aso-connect` | setup, status, sync | ASC integration |
+| `/aso-release` | create, attach, submit, notes, phased | Version & release management |
+| `/aso-assets` | screenshots, iap | Screenshots & IAP setup |
+| `/aso-manage` | reviews, legal | Reviews & legal docs |
+| `/aso-build` | (default), --simulator, --archive, --upload | Xcode build & upload |
 
 ## Workflow Patterns
 
-### Quick Optimization
+### Full App Store Submission
 ```
-User: /aso TaskFlow
-→ Collect app details
-→ Generate metadata
-→ Validate limits
-→ Output copy-paste ready
-→ Save to memory
-```
-
-### Full Audit
-```
-User: /aso-audit TaskFlow
-→ Phase 1: Research (iTunes API + competitors)
-→ Phase 2: Optimization (metadata generation)
-→ Phase 3: Strategy (timeline + checklists)
-→ Phase 4: Synthesis (master action plan)
-→ Output to outputs/TaskFlow/
+/aso-connect setup                # Configure credentials
+/aso AppName --audit              # Research + optimize
+/aso-assets screenshots           # Generate screenshots
+/aso-assets iap                   # Set up IAPs
+/aso-release create 1.0.0         # Create version
+/aso-release attach               # Attach build
+/aso-connect sync                 # Push metadata
+/aso-connect status               # Verify readiness
+/aso-release submit               # Submit for review
 ```
 
-### App Store Connect Submission
+### Version Update
 ```
-User: /aso-submit TaskFlow
-→ Check credentials (~/.aso/credentials.json)
-→ Generate JWT token
-→ Apply privacy labels (via iris API)
-→ Push metadata (all languages)
-→ Upload screenshots
-→ Verify with /aso-status
+/aso-release notes                # Generate What's New
+/aso-release create 1.1.0         # Create new version
+/aso-release attach               # Attach latest build
+/aso-release submit               # Submit for review
+/aso-release phased start         # Enable phased release
 ```
 
-### Screenshot Generation
+### Quick Metadata
 ```
-User: /aso-screenshots
-→ Spec Generation (codebase analysis → headlines)
-→ Give specs to user (what to capture)
-→ User provides screenshots from simulator
-→ Gemini MCP generates 3 versions per spec
-→ User Selection
-→ Final Export (1290x2796)
+/aso AppName                      # Generate optimized metadata
+/aso-connect sync                 # Push to ASC
+```
+
+### Localization
+```
+/aso --localize tr,de,ja          # Translate .xcstrings
+/aso-connect sync --locale tr     # Sync specific locale
 ```
 
 ## API Endpoints
@@ -246,14 +236,16 @@ Base URL: `https://api.appstoreconnect.apple.com/v1`
 | Operation | Method | Endpoint |
 |-----------|--------|----------|
 | List Apps | GET | `/apps` |
-| Get App | GET | `/apps/{id}` |
 | List Versions | GET | `/apps/{id}/appStoreVersions` |
+| Create Version | POST | `/appStoreVersions` |
+| List Builds | GET | `/apps/{id}/builds` |
+| Attach Build | PATCH | `/appStoreVersions/{id}` |
 | Get Localizations | GET | `/appStoreVersions/{id}/appStoreVersionLocalizations` |
 | Update Localization | PATCH | `/appStoreVersionLocalizations/{id}` |
-| Get App Info | GET | `/apps/{id}/appInfos` |
-| Update App Info | PATCH | `/appInfoLocalizations/{id}` |
+| Submit for Review | POST | `/appStoreVersionSubmissions` |
+| Create Phased Release | POST | `/appStoreVersionPhasedReleases` |
 | List IAPs | GET | `/apps/{id}/inAppPurchasesV2` |
-| List Subscriptions | GET | `/apps/{id}/subscriptionGroups?include=subscriptions` |
+| List Reviews | GET | `/apps/{id}/customerReviews` |
 
 ### iris API (Web Session)
 Base URL: `https://appstoreconnect.apple.com/iris/v1`
@@ -265,18 +257,25 @@ Used for:
 
 ## Integration Points
 
-### Astro MCP (Optional)
-When available, use these tools:
-- `list_apps` - Get user's apps
-- `get_app_keywords` - Current rankings
-- `search_rankings` - Track positions
-- `get_keyword_suggestions` - AI suggestions
-
 ### Gemini MCP (Screenshots)
 - Required for screenshot generation
 - Install: `claude mcp add gemini-mcp -s user -- npx -y @houtini/gemini-mcp`
 - Set: `export GEMINI_API_KEY="your_key"`
 - Tools: `generate_image`, `edit_image`
+
+### RevenueCat MCP (IAP Sync)
+- Optional for IAP synchronization
+- Install: `claude mcp add --transport http revenuecat https://mcp.revenuecat.ai/mcp --header "Authorization: Bearer V2_KEY"`
+- Tools: `list_products`, `create_product`, `get_project`
+
+### XcodeBuildMCP (Build)
+- Required for /aso-build command
+- Install: See https://github.com/getsentry/XcodeBuildMCP
+- Tools: `build`, `archive`, `upload_to_testflight`
+
+### Astro MCP (Optional)
+- Real-time keyword rankings
+- Tools: `list_apps`, `get_app_keywords`, `search_rankings`
 
 ## Quality Standards
 
@@ -288,11 +287,33 @@ When available, use these tools:
 - Actionable checklists (not vague tasks)
 
 ### Self-Assessment
-Each output should score ≥ 4/5 on:
+Each output should score >= 4/5 on:
 - Completeness
 - Actionability
 - Data Quality
 - User Readiness
+
+## Troubleshooting
+
+### iTunes API Timeout
+- Retry after 5 seconds
+- Fall back to WebFetch
+- Ask user for competitor data
+
+### Character Limit Exceeded
+- Truncate intelligently (not mid-word)
+- Suggest alternative phrasing
+- Prioritize high-value keywords
+
+### ASC Authentication Failed
+- Check ~/.aso/credentials.json
+- Verify API key is Admin role
+- Regenerate token
+
+### Screenshot Generation Failed
+- Check Gemini MCP installed
+- Check GEMINI_API_KEY environment variable set
+- Verify simulator screenshot path exists
 
 ## Sources and Credits
 
@@ -300,25 +321,3 @@ This skill combines best practices from:
 - [alirezarezvani/claude-code-aso-skill](https://github.com/alirezarezvani/claude-code-aso-skill) - Agent system, structured outputs
 - [Mehrozsheikh/aso-appstore-listing-skill](https://github.com/Mehrozsheikh/aso-appstore-listing-skill) - Minimal skill format, Astro MCP
 - [adamlyttleapps/claude-skill-aso-appstore-screenshots](https://github.com/adamlyttleapps/claude-skill-aso-appstore-screenshots) - Screenshot generation
-
-## Troubleshooting
-
-### iTunes API Timeout
-→ Retry after 5 seconds
-→ Fall back to WebFetch
-→ Ask user for competitor data
-
-### Character Limit Exceeded
-→ Truncate intelligently (not mid-word)
-→ Suggest alternative phrasing
-→ Prioritize high-value keywords
-
-### ASC Authentication Failed
-→ Check ~/.aso/credentials.json
-→ Verify API key is Admin role
-→ Regenerate token
-
-### Screenshot Generation Failed
-→ Check Gemini MCP installed: `claude mcp add gemini-mcp -s user -- npx -y @houtini/gemini-mcp`
-→ Check GEMINI_API_KEY environment variable set
-→ Verify simulator screenshot path exists
