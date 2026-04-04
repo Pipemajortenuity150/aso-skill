@@ -29,6 +29,11 @@ Phase 3: Gemini MCP Generation
 └── Generate 3 polished versions per spec
 └── User picks favorite
 └── Export to App Store dimensions
+
+Phase 4: Upload to App Store Connect (Optional)
+└── Create screenshot sets for each display type
+└── Upload final screenshots
+└── Verify upload complete
 ```
 
 ## Prerequisites
@@ -206,6 +211,130 @@ Resume anytime with `/aso-screenshots`
 5. Gemini generates 3 versions → User picks favorite
 
 6. Repeat for remaining specs
+```
+
+---
+
+## Phase 4: Upload to App Store Connect
+
+After generating and selecting final screenshots, upload to ASC:
+
+### Prerequisites
+- API Key configured (`~/.aso/credentials.json`)
+- App version in PREPARE_FOR_SUBMISSION state
+
+### Upload Implementation
+
+```python
+import os
+import hashlib
+import urllib.request
+from lib.asc_api import ASCClient, generate_token
+
+token = generate_token()
+client = ASCClient(token)
+
+# 1. Get app and version
+apps = client.list_apps()
+app_id = apps[0]["id"]
+version = client.get_editable_version(app_id)
+version_id = version["id"]
+
+# 2. Get localization
+locs = client.get_version_localizations(version_id)
+loc_id = locs[0]["id"]  # e.g., en-GB
+
+# 3. Create screenshot set (if needed)
+display_type = "APP_IPHONE_67"  # 6.7" iPhone
+ss_sets = client.get_screenshot_sets(loc_id)
+
+# Find existing or create new
+ss_set = next(
+    (s for s in ss_sets if s["attributes"]["screenshotDisplayType"] == display_type),
+    None
+)
+if not ss_set:
+    result = client.create_screenshot_set(loc_id, display_type)
+    ss_set = result["data"]
+
+ss_set_id = ss_set["id"]
+
+# 4. Upload screenshot
+screenshot_path = "screenshots/final/01-track-prices.jpg"
+file_size = os.path.getsize(screenshot_path)
+filename = os.path.basename(screenshot_path)
+
+# Reserve upload slot
+reservation = client.reserve_screenshot(ss_set_id, filename, file_size)
+screenshot_id = reservation["data"]["id"]
+upload_ops = reservation["data"]["attributes"]["uploadOperations"]
+
+# Upload to Apple's S3
+with open(screenshot_path, "rb") as f:
+    file_data = f.read()
+
+for op in upload_ops:
+    req = urllib.request.Request(
+        op["url"],
+        data=file_data,
+        method=op["method"],
+        headers={h["name"]: h["value"] for h in op["requestHeaders"]}
+    )
+    urllib.request.urlopen(req)
+
+# Calculate checksum and commit
+checksum = hashlib.md5(file_data).hexdigest()
+client.commit_screenshot(screenshot_id, checksum)
+
+print(f"✅ Uploaded: {filename}")
+```
+
+### Display Types
+
+| Type | Device | Dimensions |
+|------|--------|------------|
+| `APP_IPHONE_67` | iPhone 6.7" (14/15 Pro Max) | 1290 x 2796 |
+| `APP_IPHONE_65` | iPhone 6.5" (11 Pro Max) | 1242 x 2688 |
+| `APP_IPHONE_61` | iPhone 6.1" (14/15) | 1179 x 2556 |
+| `APP_IPAD_PRO_129` | iPad Pro 12.9" | 2048 x 2732 |
+| `APP_IPAD_PRO_3GEN_129` | iPad Pro 12.9" 3rd gen | 2048 x 2732 |
+
+### Batch Upload
+
+```python
+# Upload all screenshots in final/ directory
+import glob
+
+screenshots = glob.glob("screenshots/final/*.jpg")
+for path in sorted(screenshots):
+    upload_screenshot(path, ss_set_id, client)
+    print(f"✅ {os.path.basename(path)}")
+
+print(f"\n📸 Uploaded {len(screenshots)} screenshots")
+```
+
+### Upload with /aso-screenshots
+
+```
+/aso-screenshots --upload
+
+📸 Upload Screenshots to App Store Connect
+─────────────────────────────────────────
+
+Found 5 screenshots in screenshots/final/
+
+App: MyApp (1234567890)
+Version: 1.0.0 (PREPARE_FOR_SUBMISSION)
+Locale: en-GB
+
+Uploading to iPhone 6.7" set...
+  ✅ 01-track-prices.jpg
+  ✅ 02-search-cards.jpg
+  ✅ 03-build-collection.jpg
+  ✅ 04-compare-prices.jpg
+  ✅ 05-share-finds.jpg
+
+✅ Upload complete! 5 screenshots uploaded.
 ```
 
 ---

@@ -303,6 +303,248 @@ class ASCClient:
         """List subscription groups with subscriptions."""
         return self._request("GET", f"apps/{app_id}/subscriptionGroups?include=subscriptions")
 
+    # =========================================================================
+    # Version Management
+    # =========================================================================
+
+    def create_version(self, app_id: str, version_string: str, platform: str = "IOS") -> Dict[str, Any]:
+        """Create a new app store version.
+
+        Args:
+            app_id: The app's Apple ID
+            version_string: Version number (e.g., "1.0", "2.0.1")
+            platform: IOS or MAC_OS
+        """
+        data = {
+            "data": {
+                "type": "appStoreVersions",
+                "attributes": {
+                    "versionString": version_string,
+                    "platform": platform
+                },
+                "relationships": {
+                    "app": {
+                        "data": {"type": "apps", "id": app_id}
+                    }
+                }
+            }
+        }
+        return self._request("POST", "appStoreVersions", data)
+
+    def get_version(self, version_id: str) -> Dict[str, Any]:
+        """Get version details by ID."""
+        return self._request("GET", f"appStoreVersions/{version_id}")
+
+    def update_version(self, version_id: str, attributes: Dict[str, Any]) -> Dict[str, Any]:
+        """Update version attributes (copyright, etc.)."""
+        data = {
+            "data": {
+                "type": "appStoreVersions",
+                "id": version_id,
+                "attributes": attributes
+            }
+        }
+        return self._request("PATCH", f"appStoreVersions/{version_id}", data)
+
+    def get_editable_version(self, app_id: str) -> Optional[Dict[str, Any]]:
+        """Get version in PREPARE_FOR_SUBMISSION state."""
+        response = self._request(
+            "GET",
+            f"apps/{app_id}/appStoreVersions?filter[appStoreState]=PREPARE_FOR_SUBMISSION"
+        )
+        versions = response.get("data", [])
+        return versions[0] if versions else None
+
+    # =========================================================================
+    # Build Management
+    # =========================================================================
+
+    def list_builds(self, app_id: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """List builds for an app, sorted by upload date."""
+        response = self._request(
+            "GET",
+            f"apps/{app_id}/builds?limit={limit}&sort=-uploadedDate"
+        )
+        return response.get("data", [])
+
+    def get_build(self, build_id: str) -> Dict[str, Any]:
+        """Get build details."""
+        return self._request("GET", f"builds/{build_id}")
+
+    def attach_build_to_version(self, version_id: str, build_id: str) -> Dict[str, Any]:
+        """Attach a build to an app store version."""
+        data = {
+            "data": {
+                "type": "appStoreVersions",
+                "id": version_id,
+                "relationships": {
+                    "build": {
+                        "data": {"type": "builds", "id": build_id}
+                    }
+                }
+            }
+        }
+        return self._request("PATCH", f"appStoreVersions/{version_id}", data)
+
+    # =========================================================================
+    # Screenshot Management
+    # =========================================================================
+
+    def get_screenshot_sets(self, loc_id: str) -> List[Dict[str, Any]]:
+        """Get screenshot sets for a localization."""
+        response = self._request(
+            "GET",
+            f"appStoreVersionLocalizations/{loc_id}/appScreenshotSets"
+        )
+        return response.get("data", [])
+
+    def create_screenshot_set(
+        self,
+        loc_id: str,
+        display_type: str = "APP_IPHONE_67"
+    ) -> Dict[str, Any]:
+        """Create a screenshot set for a display type.
+
+        Display types:
+        - APP_IPHONE_67 (6.7" - iPhone 14 Pro Max, 15 Pro Max)
+        - APP_IPHONE_65 (6.5" - iPhone 11 Pro Max, XS Max)
+        - APP_IPHONE_61 (6.1" - iPhone 14, 15)
+        - APP_IPAD_PRO_129 (12.9" iPad Pro)
+        - APP_IPAD_PRO_3GEN_129 (12.9" iPad Pro 3rd gen)
+        """
+        data = {
+            "data": {
+                "type": "appScreenshotSets",
+                "attributes": {
+                    "screenshotDisplayType": display_type
+                },
+                "relationships": {
+                    "appStoreVersionLocalization": {
+                        "data": {"type": "appStoreVersionLocalizations", "id": loc_id}
+                    }
+                }
+            }
+        }
+        return self._request("POST", "appScreenshotSets", data)
+
+    def reserve_screenshot(
+        self,
+        screenshot_set_id: str,
+        filename: str,
+        file_size: int
+    ) -> Dict[str, Any]:
+        """Reserve a screenshot upload slot.
+
+        Returns upload operations for uploading the file.
+        """
+        data = {
+            "data": {
+                "type": "appScreenshots",
+                "attributes": {
+                    "fileName": filename,
+                    "fileSize": file_size
+                },
+                "relationships": {
+                    "appScreenshotSet": {
+                        "data": {"type": "appScreenshotSets", "id": screenshot_set_id}
+                    }
+                }
+            }
+        }
+        return self._request("POST", "appScreenshots", data)
+
+    def commit_screenshot(self, screenshot_id: str, checksum: str) -> Dict[str, Any]:
+        """Commit screenshot after upload."""
+        data = {
+            "data": {
+                "type": "appScreenshots",
+                "id": screenshot_id,
+                "attributes": {
+                    "uploaded": True,
+                    "sourceFileChecksum": checksum
+                }
+            }
+        }
+        return self._request("PATCH", f"appScreenshots/{screenshot_id}", data)
+
+    def delete_screenshot(self, screenshot_id: str) -> None:
+        """Delete a screenshot."""
+        self._request("DELETE", f"appScreenshots/{screenshot_id}")
+
+    def get_screenshots(self, screenshot_set_id: str) -> List[Dict[str, Any]]:
+        """Get screenshots in a set."""
+        response = self._request(
+            "GET",
+            f"appScreenshotSets/{screenshot_set_id}/appScreenshots"
+        )
+        return response.get("data", [])
+
+    # =========================================================================
+    # Review Submission
+    # =========================================================================
+
+    def submit_for_review(self, version_id: str) -> Dict[str, Any]:
+        """Submit version for App Store review."""
+        data = {
+            "data": {
+                "type": "appStoreVersionSubmissions",
+                "relationships": {
+                    "appStoreVersion": {
+                        "data": {"type": "appStoreVersions", "id": version_id}
+                    }
+                }
+            }
+        }
+        return self._request("POST", "appStoreVersionSubmissions", data)
+
+    # =========================================================================
+    # Phased Release
+    # =========================================================================
+
+    def create_phased_release(self, version_id: str) -> Dict[str, Any]:
+        """Enable phased release for a version."""
+        data = {
+            "data": {
+                "type": "appStoreVersionPhasedReleases",
+                "attributes": {
+                    "phasedReleaseState": "ACTIVE"
+                },
+                "relationships": {
+                    "appStoreVersion": {
+                        "data": {"type": "appStoreVersions", "id": version_id}
+                    }
+                }
+            }
+        }
+        return self._request("POST", "appStoreVersionPhasedReleases", data)
+
+    def update_phased_release(
+        self,
+        phased_release_id: str,
+        state: str
+    ) -> Dict[str, Any]:
+        """Update phased release state.
+
+        States: ACTIVE, PAUSED, COMPLETE
+        """
+        data = {
+            "data": {
+                "type": "appStoreVersionPhasedReleases",
+                "id": phased_release_id,
+                "attributes": {
+                    "phasedReleaseState": state
+                }
+            }
+        }
+        return self._request("PATCH", f"appStoreVersionPhasedReleases/{phased_release_id}", data)
+
+    def get_phased_release(self, version_id: str) -> Optional[Dict[str, Any]]:
+        """Get phased release for a version."""
+        try:
+            return self._request("GET", f"appStoreVersions/{version_id}/appStoreVersionPhasedRelease")
+        except APIError:
+            return None
+
 
 class IrisClient:
     """App Store Connect iris API client using web session authentication."""

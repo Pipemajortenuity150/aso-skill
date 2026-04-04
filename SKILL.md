@@ -34,19 +34,26 @@ Set up In-App Purchases and Subscriptions.
 - **Output**: IAPs created, attached to version, ready for review
 
 ### 5. SCREENSHOT MODE (`/aso-screenshots`)
-Generate App Store screenshots with Gemini MCP.
-- **Output**: Specs (headlines) → User captures → Gemini MCP generates final screenshots
+Generate App Store screenshots with Gemini MCP and upload to ASC.
+- **Output**: Specs → User captures → Gemini generates → Upload to ASC
 - **Requires**: Gemini MCP configured
+- **Upload**: Optional `--upload` flag to push to App Store Connect
 
-### 6. SETUP MODE (`/aso-setup`)
+### 6. VERSION MODE (`/aso-version`)
+Manage App Store Connect versions, builds, and submissions.
+- **Output**: Create versions, attach builds, submit for review
+- **Features**: List versions, attach builds, phased release
+- **Requires**: API Key credentials
+
+### 8. SETUP MODE (`/aso-setup`)
 Configure credentials and authentication.
 - **Output**: API Key configured, credentials saved
 
-### 7. STATUS MODE (`/aso-status`)
+### 9. STATUS MODE (`/aso-status`)
 Check submission readiness.
 - **Output**: Complete checklist of what's done and what's missing
 
-### 8. SYNC MODE (`/aso-sync`)
+### 10. SYNC MODE (`/aso-sync`)
 Sync IAP/Subscriptions between Project, App Store Connect, and RevenueCat.
 - **Output**: Products synced across all platforms
 - **Sources**: StoreKit config, Swift files
@@ -476,7 +483,9 @@ pip3 install PyJWT cryptography
 | `/aso-audit` | Full research + analysis |
 | `/aso-submit` | Push to App Store Connect |
 | `/aso-iap` | IAP & Subscription setup |
-| `/aso-screenshots` | Screenshot specifications |
+| `/aso-screenshots` | Screenshot generation + upload |
+| `/aso-version` | Version & build management |
+| `/aso-sync` | Project-ASC-RevenueCat sync |
 | `/aso-setup` | Configure credentials |
 | `/aso-status` | Check submission readiness |
 
