@@ -46,10 +46,10 @@
 - **Best practices** - Learn from top apps
 
 ### 📸 Screenshot Generation
-- **Benefit discovery** - AI analyzes your codebase
-- **Device frames** - Professional iPhone mockups
-- **AI enhancement** - Nano Banana Pro / Gemini MCP
-- **App Store ready** - Exact pixel dimensions
+- **Spec generation** - AI analyzes codebase, creates headlines
+- **User captures** - Take screenshots matching specs
+- **Gemini MCP** - Generates professional App Store screenshots
+- **App Store ready** - Exact pixel dimensions (1290x2796)
 
 ### 🚀 App Store Connect
 - **Privacy labels** - Automated configuration
@@ -91,18 +91,10 @@ git clone https://github.com/furkancingoz/aso-skill.git ~/.claude/skills/aso
 ### Dependencies (Optional)
 
 ```bash
-# For screenshot generation
-pip install Pillow
-
-# For AI screenshot enhancement
-npm install -g @houtini/gemini-mcp
+# For screenshot generation (Gemini MCP)
+claude mcp add gemini-mcp -s user -- npx -y @houtini/gemini-mcp
+export GEMINI_API_KEY="your_api_key_here"
 ```
-
-### Font Requirement (Screenshots)
-
-For screenshot generation, install **SF Pro Display Black**:
-- Download from [Apple Developer Fonts](https://developer.apple.com/fonts/)
-- Install to `/Library/Fonts/SF-Pro-Display-Black.otf`
 
 ---
 
@@ -187,9 +179,9 @@ outputs/[app-name]/
 ```
 screenshots/
 ├── 01-track-prices/
-│   ├── scaffold.png              # Layout template
-│   ├── v1.jpg, v2.jpg, v3.jpg    # AI versions
-│   └── v1-resized.jpg            # App Store ready
+│   ├── simulator.png             # User's screenshot
+│   ├── v1.jpg, v2.jpg, v3.jpg    # Gemini versions
+│   └── final.jpg                 # User's pick
 ├── final/
 │   ├── 01-track-prices.jpg       # Approved
 │   └── 02-search-cards.jpg
@@ -202,12 +194,11 @@ screenshots/
 
 ### How It Works
 
-1. **Benefit Discovery** - AI analyzes your codebase for core features
-2. **Screenshot Collection** - Assess and rate simulator screenshots
-3. **Pairing** - Match benefits with best screenshots
-4. **Scaffold** - Generate deterministic layout with compose.py
-5. **Enhancement** - AI adds polish and breakout elements
-6. **Export** - Crop to exact App Store dimensions
+1. **Spec Generation** - AI analyzes your codebase, creates headline specs
+2. **User Captures** - You take screenshots from simulator matching specs
+3. **Gemini MCP** - Combines spec + screenshot + brand color
+4. **Version Selection** - Generates 3 versions, you pick favorite
+5. **Export** - Final screenshot at App Store dimensions (1290x2796)
 
 ### Supported Sizes
 
@@ -296,9 +287,10 @@ aso-skill/
 - App ratings history
 - Setup: https://tryastro.app/docs/mcp/
 
-### Gemini MCP (Optional)
-- AI screenshot enhancement
-- Install: `npm install -g @houtini/gemini-mcp`
+### Gemini MCP (Screenshot Generation)
+- AI-powered App Store screenshot generation
+- Install: `claude mcp add gemini-mcp -s user -- npx -y @houtini/gemini-mcp`
+- Set: `export GEMINI_API_KEY="your_key"`
 
 ### App Store Connect (Direct API)
 - Direct submission via ASC API

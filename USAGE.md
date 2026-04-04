@@ -584,9 +584,9 @@ cat ~/.aso/credentials.json
 ### "Screenshot generation failed"
 
 ```bash
-# Check Pillow
-pip3 install Pillow
+# Check Gemini MCP installed
+claude mcp add gemini-mcp -s user -- npx -y @houtini/gemini-mcp
 
-# Check font
-ls /Library/Fonts/SF-Pro-Display-Black.otf
+# Check API key set
+echo $GEMINI_API_KEY
 ```

@@ -164,8 +164,9 @@ apps = client.list_apps()
 
 Requires PyJWT: `pip3 install PyJWT cryptography`
 
-### screenshot_composer.py
+### screenshot_composer.py (Legacy - Optional)
 ```python
+# Legacy scaffold generation - now replaced by Gemini MCP
 from lib.screenshot_composer import compose_screenshot, ScreenshotConfig
 
 config = ScreenshotConfig(
@@ -178,7 +179,7 @@ config = ScreenshotConfig(
 compose_screenshot(config)
 ```
 
-Requires Pillow: `pip install Pillow`
+Optional - Gemini MCP now handles screenshot generation directly.
 
 ## Command Reference
 
@@ -229,13 +230,12 @@ User: /aso-submit TaskFlow
 ### Screenshot Generation
 ```
 User: /aso-screenshots
-→ Benefit Discovery (codebase analysis)
-→ Screenshot Collection & Assessment
-→ Pairing Benefits with Screenshots
-→ Scaffold Generation (compose.py)
-→ AI Enhancement (3 versions)
+→ Spec Generation (codebase analysis → headlines)
+→ Give specs to user (what to capture)
+→ User provides screenshots from simulator
+→ Gemini MCP generates 3 versions per spec
 → User Selection
-→ Final Export
+→ Final Export (1290x2796)
 ```
 
 ## API Endpoints
@@ -273,8 +273,9 @@ When available, use these tools:
 - `get_keyword_suggestions` - AI suggestions
 
 ### Gemini MCP (Screenshots)
-- Required for AI screenshot enhancement
-- Install: `npm install -g gemini-mcp`
+- Required for screenshot generation
+- Install: `claude mcp add gemini-mcp -s user -- npx -y @houtini/gemini-mcp`
+- Set: `export GEMINI_API_KEY="your_key"`
 - Tools: `generate_image`, `edit_image`
 
 ## Quality Standards
@@ -318,6 +319,6 @@ This skill combines best practices from:
 → Regenerate token
 
 ### Screenshot Generation Failed
-→ Check Pillow installed: `pip install Pillow`
-→ Check font available: SF Pro Display Black
+→ Check Gemini MCP installed: `claude mcp add gemini-mcp -s user -- npx -y @houtini/gemini-mcp`
+→ Check GEMINI_API_KEY environment variable set
 → Verify simulator screenshot path exists

@@ -34,8 +34,9 @@ Set up In-App Purchases and Subscriptions.
 - **Output**: IAPs created, attached to version, ready for review
 
 ### 5. SCREENSHOT MODE (`/aso-screenshots`)
-Generate App Store screenshot specifications.
-- **Output**: Benefit headlines, screenshot specs, design guidelines
+Generate App Store screenshots with Gemini MCP.
+- **Output**: Specs (headlines) → User captures → Gemini MCP generates final screenshots
+- **Requires**: Gemini MCP configured
 
 ### 6. SETUP MODE (`/aso-setup`)
 Configure credentials and authentication.
