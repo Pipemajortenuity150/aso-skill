@@ -25,10 +25,10 @@ ls ~/.claude/skills/aso/SKILL.md
 | Requirement | Version | Required For |
 |-------------|---------|--------------|
 | Claude Code | Latest | All features |
-| Python 3 | 3.8+ | Screenshot generation |
+| Python 3 | 3.8+ | API calls, screenshots |
+| PyJWT | Latest | App Store Connect API |
 | Pillow | Latest | Screenshot generation |
 | Node.js | 18+ | Gemini MCP (optional) |
-| macOS | 14+ | App Store Connect |
 
 ### Step 1: Clone Repository
 
@@ -47,7 +47,17 @@ git clone https://github.com/furkancingoz/aso-skill.git .claude/skills/aso
 1. Download ZIP from GitHub
 2. Extract to `~/.claude/skills/aso/`
 
-### Step 2: Verify Installation
+### Step 2: Install Python Dependencies
+
+```bash
+# Required for App Store Connect API
+pip3 install PyJWT cryptography
+
+# Optional for screenshot generation
+pip3 install Pillow
+```
+
+### Step 3: Verify Installation
 
 ```bash
 # Check files exist
@@ -57,7 +67,7 @@ ls ~/.claude/skills/aso/
 # SKILL.md  CLAUDE.md  README.md  agents/  commands/  lib/  templates/
 ```
 
-### Step 3: Test in Claude Code
+### Step 4: Test in Claude Code
 
 ```bash
 # Start Claude Code
@@ -65,6 +75,64 @@ claude
 
 # Test quick command
 /aso TestApp - a test application
+```
+
+---
+
+## App Store Connect Setup
+
+For direct App Store Connect integration (`/aso-submit`, `/aso-status`):
+
+### Step 1: Create API Key
+
+1. Go to: https://appstoreconnect.apple.com/access/integrations/api
+2. Click "Generate API Key"
+3. Select "Admin" role
+4. Download .p8 file (ONE TIME ONLY!)
+5. Note the Issuer ID and Key ID
+
+### Step 2: Configure Credentials
+
+```bash
+# Create credentials directory
+mkdir -p ~/.aso
+
+# Move .p8 file
+mv ~/Downloads/AuthKey_XXXXX.p8 ~/.aso/
+chmod 600 ~/.aso/AuthKey_*.p8
+
+# Create credentials file
+cat > ~/.aso/credentials.json << 'EOF'
+{
+  "issuerId": "YOUR_ISSUER_ID",
+  "keyId": "YOUR_KEY_ID",
+  "privateKeyPath": "~/.aso/AuthKey_YOUR_KEY_ID.p8"
+}
+EOF
+chmod 600 ~/.aso/credentials.json
+```
+
+### Step 3: Test API Connection
+
+```bash
+cd ~/.claude/skills/aso
+python3 lib/asc_api.py
+```
+
+Expected output:
+```
+Testing ASC API Client...
+--------------------------------------------------
+
+1. Checking credentials...
+   API Key: ✅
+   Web Session: ❌
+
+2. Testing JWT generation...
+   ✅ Token generated (XXX chars)
+
+3. Testing API connection...
+   ✅ Connected! Found X app(s)
 ```
 
 ---
@@ -77,9 +145,6 @@ For `/aso-screenshots` command:
 
 ```bash
 # Install Pillow
-pip install Pillow
-
-# Or with pip3
 pip3 install Pillow
 ```
 
@@ -112,15 +177,6 @@ For real-time App Store rankings and ratings:
 1. Sign up at [tryastro.app](https://tryastro.app/?aff=kdX8mz)
 2. Follow setup at [tryastro.app/docs/mcp](https://tryastro.app/docs/mcp/)
 
-### App Store Connect (Blitz)
-
-For direct App Store Connect submission:
-
-1. Download [Blitz](https://blitz.dev)
-2. Launch Blitz app
-3. Authenticate with Apple ID
-4. Use `/aso-submit` command
-
 ---
 
 ## Installation Verification
@@ -137,6 +193,7 @@ For direct App Store Connect submission:
 # 3. Test Python modules
 cd ~/.claude/skills/aso
 python3 lib/itunes_api.py
+python3 lib/asc_api.py
 ```
 
 ### Expected iTunes API Output
@@ -181,6 +238,15 @@ iTunes API test complete!
 2. Retry after 5 seconds
 3. Use WebFetch fallback (automatic)
 
+### PyJWT Not Found
+
+**Symptom:** App Store Connect API fails
+
+**Fix:**
+```bash
+pip3 install PyJWT cryptography
+```
+
 ### Pillow Not Found
 
 **Symptom:** Screenshot generation fails
@@ -188,8 +254,6 @@ iTunes API test complete!
 **Fix:**
 ```bash
 pip3 install Pillow
-# or
-python3 -m pip install Pillow
 ```
 
 ### Font Not Found
@@ -206,10 +270,10 @@ python3 -m pip install Pillow
 **Symptom:** `/aso-submit` returns 401
 
 **Fix:**
-1. Launch Blitz app
-2. Go to Settings → Authentication
-3. Sign in with Apple ID
-4. Retry command
+1. Check `~/.aso/credentials.json` exists
+2. Verify Issuer ID and Key ID are correct
+3. Ensure .p8 file path is correct
+4. Regenerate API key if needed
 
 ---
 
@@ -235,6 +299,7 @@ git clone https://github.com/furkancingoz/aso-skill.git ~/.claude/skills/aso
 
 ```bash
 rm -rf ~/.claude/skills/aso
+rm -rf ~/.aso  # Remove credentials (optional)
 ```
 
 ---
@@ -252,16 +317,20 @@ After installation:
 ├── LICENSE               # MIT License
 ├── agents/
 │   ├── aso-quick.md      # Fast metadata agent
-│   └── aso-full.md       # Full audit agent
+│   ├── aso-full.md       # Full audit agent
+│   └── asc-api.md        # ASC API agent
 ├── commands/
 │   ├── aso.md            # /aso command
 │   ├── aso-audit.md      # /aso-audit command
 │   ├── aso-submit.md     # /aso-submit command
+│   ├── aso-iap.md        # /aso-iap command
+│   ├── aso-setup.md      # /aso-setup command
+│   ├── aso-status.md     # /aso-status command
 │   └── aso-screenshots.md # /aso-screenshots command
 ├── lib/
 │   ├── itunes_api.py     # iTunes API client
 │   ├── keyword_engine.py # Keyword analysis
-│   ├── asc_api.py        # App Store Connect
+│   ├── asc_api.py        # App Store Connect API
 │   └── screenshot_composer.py
 └── templates/
     ├── apple-metadata.md
@@ -273,6 +342,7 @@ After installation:
 ## Next Steps
 
 1. **Read:** [README.md](README.md) for features overview
-2. **Try:** `/aso YourApp` to generate metadata
-3. **Explore:** `/aso-audit YourApp` for full analysis
-4. **Customize:** Edit agents in `agents/` folder
+2. **Setup:** Run `/aso-setup` to configure App Store Connect
+3. **Try:** `/aso YourApp` to generate metadata
+4. **Explore:** `/aso-audit YourApp` for full analysis
+5. **Customize:** Edit agents in `agents/` folder

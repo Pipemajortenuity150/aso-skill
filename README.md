@@ -297,10 +297,10 @@ aso-skill/
 - AI screenshot enhancement
 - Install: `npm install -g @houtini/gemini-mcp`
 
-### App Store Connect (Optional)
-- Direct submission via Blitz
+### App Store Connect (Direct API)
+- Direct submission via ASC API
 - Privacy labels configuration
-- Web session authentication
+- JWT authentication (API Key)
 
 ---
 
@@ -312,7 +312,6 @@ This skill combines best practices from:
 |---------|--------------|
 | [alirezarezvani/claude-code-aso-skill](https://github.com/alirezarezvani/claude-code-aso-skill) | Multi-agent system, structured outputs |
 | [Mehrozsheikh/aso-appstore-listing-skill](https://github.com/Mehrozsheikh/aso-appstore-listing-skill) | Minimal skill format, Astro MCP |
-| [blitzdotdev/blitz-mac](https://github.com/blitzdotdev/blitz-mac) | App Store Connect API |
 | [adamlyttleapps/claude-skill-aso-appstore-screenshots](https://github.com/adamlyttleapps/claude-skill-aso-appstore-screenshots) | Screenshot generation |
 
 ---
@@ -328,8 +327,8 @@ This skill combines best practices from:
 ### How accurate are keyword volumes?
 Estimates based on industry benchmarks (±20%). Use Apple Search Ads for exact volumes.
 
-### Do I need Blitz for submission?
-Only for direct App Store Connect integration. Metadata can be copy-pasted manually.
+### How does App Store Connect integration work?
+Direct API calls using JWT authentication. Run `/aso-setup` to configure your API key, then use `/aso-submit` to push metadata.
 
 ### Can I customize the agents?
 **Yes.** All agents are Markdown files - edit freely.

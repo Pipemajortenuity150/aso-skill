@@ -2,24 +2,24 @@
 """
 App Store Connect API Client for ASO Submission
 
-Handles authentication via web session and provides methods for:
+Handles authentication via API Key (JWT) and web session for:
 - Privacy nutrition label configuration
 - Metadata submission
 - App creation and management
 
-Requires web session cached at ~/.blitz/asc-agent/web-session.json
-(managed by Blitz app or asc_web_auth MCP tool)
+Requires credentials at ~/.aso/credentials.json
 
 Usage:
-    from lib.asc_api import ASCClient
+    from lib.asc_api import ASCClient, generate_token
 
-    client = ASCClient()
-    if client.is_authenticated():
-        client.apply_privacy_labels(app_id, privacy_config)
+    token = generate_token()
+    client = ASCClient(token)
+    apps = client.list_apps()
 """
 
 import json
 import os
+import time
 import urllib.request
 import urllib.error
 from typing import Dict, Any, Optional, List
@@ -27,6 +27,49 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
+
+# =============================================================================
+# JWT Token Generation
+# =============================================================================
+
+def generate_token() -> str:
+    """Generate JWT token for App Store Connect API."""
+    try:
+        import jwt
+    except ImportError:
+        raise ImportError("PyJWT required. Install with: pip3 install PyJWT cryptography")
+
+    creds_path = os.path.expanduser("~/.aso/credentials.json")
+
+    if not os.path.exists(creds_path):
+        raise FileNotFoundError("No credentials found. Run /aso-setup first.")
+
+    with open(creds_path) as f:
+        creds = json.load(f)
+
+    pk_path = os.path.expanduser(creds["privateKeyPath"])
+    with open(pk_path) as f:
+        private_key = f.read()
+
+    now = int(time.time())
+    payload = {
+        "iss": creds["issuerId"],
+        "iat": now,
+        "exp": now + 1200,  # 20 minutes
+        "aud": "appstoreconnect-v1"
+    }
+
+    return jwt.encode(
+        payload,
+        private_key,
+        algorithm="ES256",
+        headers={"kid": creds["keyId"], "typ": "JWT"}
+    )
+
+
+# =============================================================================
+# Privacy Configuration
+# =============================================================================
 
 class DataCategory(Enum):
     """Privacy data categories."""
@@ -144,15 +187,132 @@ class PrivacyConfig:
         ])
 
 
+# =============================================================================
+# API Clients
+# =============================================================================
+
 class ASCClient:
-    """App Store Connect API client using web session authentication."""
+    """App Store Connect API client using JWT authentication."""
+
+    BASE_URL = "https://api.appstoreconnect.apple.com/v1"
+
+    def __init__(self, token: str = None):
+        """
+        Initialize ASC client.
+
+        Args:
+            token: JWT token for authentication
+        """
+        self.token = token
+
+    def _request(
+        self,
+        method: str,
+        endpoint: str,
+        data: Dict[str, Any] = None,
+    ) -> Dict[str, Any]:
+        """Make authenticated API request."""
+        if not self.token:
+            self.token = generate_token()
+
+        url = f"{self.BASE_URL}/{endpoint}"
+
+        headers = {
+            "Authorization": f"Bearer {self.token}",
+            "Content-Type": "application/json",
+        }
+
+        body = json.dumps(data).encode() if data else None
+
+        req = urllib.request.Request(
+            url,
+            data=body,
+            method=method,
+            headers=headers,
+        )
+
+        try:
+            with urllib.request.urlopen(req, timeout=30) as response:
+                return json.loads(response.read().decode())
+        except urllib.error.HTTPError as e:
+            error_body = e.read().decode()
+            if e.code == 401:
+                raise AuthenticationError("Token expired or invalid. Regenerate with generate_token().")
+            elif e.code == 409:
+                raise ConflictError(f"Conflict: {error_body[:500]}")
+            else:
+                raise APIError(f"HTTP {e.code}: {error_body[:500]}")
+
+    def list_apps(self) -> List[Dict[str, Any]]:
+        """List all apps in account."""
+        response = self._request("GET", "apps")
+        return response.get("data", [])
+
+    def get_app(self, app_id: str) -> Dict[str, Any]:
+        """Get app details by ID."""
+        return self._request("GET", f"apps/{app_id}")
+
+    def get_app_versions(self, app_id: str) -> List[Dict[str, Any]]:
+        """Get all versions for an app."""
+        response = self._request("GET", f"apps/{app_id}/appStoreVersions")
+        return response.get("data", [])
+
+    def get_version_localizations(self, version_id: str) -> List[Dict[str, Any]]:
+        """Get localizations for a version."""
+        response = self._request("GET", f"appStoreVersions/{version_id}/appStoreVersionLocalizations")
+        return response.get("data", [])
+
+    def update_localization(self, loc_id: str, attributes: Dict[str, str]) -> Dict[str, Any]:
+        """Update version localization (description, keywords, etc.)."""
+        data = {
+            "data": {
+                "type": "appStoreVersionLocalizations",
+                "id": loc_id,
+                "attributes": attributes
+            }
+        }
+        return self._request("PATCH", f"appStoreVersionLocalizations/{loc_id}", data)
+
+    def get_app_infos(self, app_id: str) -> List[Dict[str, Any]]:
+        """Get app info objects."""
+        response = self._request("GET", f"apps/{app_id}/appInfos")
+        return response.get("data", [])
+
+    def get_app_info_localizations(self, app_info_id: str) -> List[Dict[str, Any]]:
+        """Get app info localizations (title, subtitle)."""
+        response = self._request("GET", f"appInfos/{app_info_id}/appInfoLocalizations")
+        return response.get("data", [])
+
+    def update_app_info_localization(self, loc_id: str, attributes: Dict[str, str]) -> Dict[str, Any]:
+        """Update app info localization (name, subtitle, privacy URL)."""
+        data = {
+            "data": {
+                "type": "appInfoLocalizations",
+                "id": loc_id,
+                "attributes": attributes
+            }
+        }
+        return self._request("PATCH", f"appInfoLocalizations/{loc_id}", data)
+
+    def list_iaps(self, app_id: str) -> List[Dict[str, Any]]:
+        """List in-app purchases."""
+        response = self._request("GET", f"apps/{app_id}/inAppPurchasesV2")
+        return response.get("data", [])
+
+    def list_subscription_groups(self, app_id: str) -> Dict[str, Any]:
+        """List subscription groups with subscriptions."""
+        return self._request("GET", f"apps/{app_id}/subscriptionGroups?include=subscriptions")
+
+
+class IrisClient:
+    """App Store Connect iris API client using web session authentication."""
 
     IRIS_BASE_URL = "https://appstoreconnect.apple.com/iris/v1"
-    SESSION_PATH = os.path.expanduser("~/.blitz/asc-agent/web-session.json")
+    SESSION_PATH = os.path.expanduser("~/.aso/web-session.json")
 
     def __init__(self, session_path: str = None):
         """
-        Initialize ASC client.
+        Initialize iris client.
 
         Args:
             session_path: Path to web session JSON file
@@ -174,20 +334,25 @@ class ASCClient:
     def _load_session(self) -> None:
         """Load cookies from session file."""
         with open(self.session_path, 'r') as f:
-            store = json.load(f)
+            session = json.load(f)
 
-        session = store['sessions'][store['last_key']]
-        cookies = []
+        # Handle simple format: {"cookies": "cookie_string"}
+        if "cookies" in session and isinstance(session["cookies"], str):
+            self._cookies = session["cookies"]
+            return
 
-        for cookie_list in session['cookies'].values():
-            for c in cookie_list:
-                if c.get('name') and c.get('value'):
-                    if c['name'].startswith('DES'):
-                        cookies.append(f'{c["name"]}="{c["value"]}"')
-                    else:
-                        cookies.append(f'{c["name"]}={c["value"]}')
-
-        self._cookies = '; '.join(cookies)
+        # Handle complex format (from browser export)
+        if "sessions" in session:
+            sess = session['sessions'][session['last_key']]
+            cookies = []
+            for cookie_list in sess['cookies'].values():
+                for c in cookie_list:
+                    if c.get('name') and c.get('value'):
+                        if c['name'].startswith('DES'):
+                            cookies.append(f'{c["name"]}="{c["value"]}"')
+                        else:
+                            cookies.append(f'{c["name"]}={c["value"]}')
+            self._cookies = '; '.join(cookies)
 
     def _request(
         self,
@@ -225,73 +390,59 @@ class ASCClient:
         except urllib.error.HTTPError as e:
             error_body = e.read().decode()
             if e.code == 401:
-                raise AuthenticationError(
-                    "Session expired. Call asc_web_auth MCP tool to re-authenticate."
-                )
+                raise AuthenticationError("Session expired. Re-export cookies from browser.")
             elif e.code == 409:
                 raise ConflictError(f"Conflict: {error_body[:500]}")
             else:
                 raise APIError(f"HTTP {e.code}: {error_body[:500]}")
 
-    def get_app(self, app_id: str) -> Dict[str, Any]:
-        """Get app details by ID."""
-        return self._request("GET", f"apps/{app_id}")
+    def get_privacy(self, app_id: str) -> Dict[str, Any]:
+        """Get privacy declarations for app."""
+        return self._request("GET", f"apps/{app_id}/appPrivacy")
 
-    def list_apps(self) -> List[Dict[str, Any]]:
-        """List all apps in account."""
-        response = self._request("GET", "apps")
-        return response.get("data", [])
-
-    def get_privacy_declarations(self, app_id: str) -> Dict[str, Any]:
-        """Get current privacy declarations for app."""
-        return self._request("GET", f"apps/{app_id}/privacyDeclarations")
-
-    def apply_privacy_config(
-        self,
-        app_id: str,
-        config: PrivacyConfig,
-    ) -> Dict[str, Any]:
-        """
-        Apply privacy configuration to app.
-
-        Note: This is a simplified interface. For production use,
-        prefer the `asc web privacy` CLI commands which handle
-        the full plan/apply/publish workflow.
-        """
-        # This would require implementing the full privacy API
-        # For now, return the config that would be applied
-        return {
-            "status": "preview",
-            "app_id": app_id,
-            "config": config.to_dict(),
-            "note": "Use 'asc web privacy apply' CLI for actual submission",
+    def update_privacy(self, privacy_id: str, data_usages: List[Dict]) -> Dict[str, Any]:
+        """Update privacy declarations."""
+        data = {
+            "data": {
+                "type": "appPrivacies",
+                "id": privacy_id,
+                "attributes": {
+                    "dataUsages": data_usages
+                }
+            }
         }
+        return self._request("PATCH", f"appPrivacies/{privacy_id}", data)
 
-    def update_app_metadata(
-        self,
-        app_id: str,
-        locale: str,
-        metadata: Dict[str, str],
-    ) -> Dict[str, Any]:
-        """
-        Update app metadata for a locale.
-
-        Args:
-            app_id: App Store Connect app ID
-            locale: Locale code (e.g., "en-US")
-            metadata: Dict with keys: name, subtitle, description, keywords, etc.
-
-        Note: This is a simplified interface. Full implementation would
-        require handling appInfoLocalizations and appStoreVersionLocalizations.
-        """
-        return {
-            "status": "preview",
-            "app_id": app_id,
-            "locale": locale,
-            "metadata": metadata,
-            "note": "Use App Store Connect UI or full API implementation for actual update",
+    def attach_subscription(self, sub_id: str) -> Dict[str, Any]:
+        """Attach subscription to next version."""
+        data = {
+            "data": {
+                "type": "subscriptionSubmissions",
+                "attributes": {"submitWithNextAppStoreVersion": True},
+                "relationships": {
+                    "subscription": {"data": {"type": "subscriptions", "id": sub_id}}
+                }
+            }
         }
+        return self._request("POST", "subscriptionSubmissions", data)
 
+    def attach_iap(self, iap_id: str) -> Dict[str, Any]:
+        """Attach IAP to next version."""
+        data = {
+            "data": {
+                "type": "inAppPurchaseSubmissions",
+                "attributes": {"submitWithNextAppStoreVersion": True},
+                "relationships": {
+                    "inAppPurchaseV2": {"data": {"type": "inAppPurchases", "id": iap_id}}
+                }
+            }
+        }
+        return self._request("POST", "inAppPurchaseSubmissions", data)
+
+
+# =============================================================================
+# Exceptions
+# =============================================================================
 
 class AuthenticationError(Exception):
     """Raised when session is invalid or expired."""
@@ -308,43 +459,15 @@ class APIError(Exception):
     pass
 
 
-# Utility functions for CLI integration
+# =============================================================================
+# Utility Functions
+# =============================================================================
 
-def check_session() -> bool:
-    """Check if ASC session exists and is valid."""
-    return ASCClient().is_authenticated()
-
-
-def generate_privacy_json(config: PrivacyConfig, output_path: str) -> str:
-    """
-    Generate privacy.json file for asc CLI.
-
-    Args:
-        config: PrivacyConfig object
-        output_path: Path to write JSON file
-
-    Returns:
-        Path to generated file
-    """
-    with open(output_path, 'w') as f:
-        f.write(config.to_json())
-    return output_path
-
-
-def get_asc_cli_commands(
-    app_id: str,
-    privacy_json_path: str,
-) -> Dict[str, str]:
-    """
-    Get asc CLI commands for privacy workflow.
-
-    Returns dict with plan, apply, and publish commands.
-    """
+def check_credentials() -> Dict[str, bool]:
+    """Check what credentials are configured."""
     return {
-        "plan": f'asc web privacy plan --app "{app_id}" --file {privacy_json_path} --pretty',
-        "apply": f'asc web privacy apply --app "{app_id}" --file {privacy_json_path} --allow-deletes --confirm',
-        "publish": f'asc web privacy publish --app "{app_id}" --confirm',
-        "verify": f'asc web privacy pull --app "{app_id}" --pretty',
+        "api_key": os.path.exists(os.path.expanduser("~/.aso/credentials.json")),
+        "web_session": os.path.exists(os.path.expanduser("~/.aso/web-session.json")),
     }
 
 
@@ -353,19 +476,35 @@ def main():
     print("Testing ASC API Client...")
     print("-" * 50)
 
-    client = ASCClient()
+    # Check credentials
+    print("\n1. Checking credentials...")
+    creds = check_credentials()
+    print(f"   API Key: {'✅' if creds['api_key'] else '❌'}")
+    print(f"   Web Session: {'✅' if creds['web_session'] else '❌'}")
 
-    # Check authentication
-    print(f"\n1. Checking authentication...")
-    if client.is_authenticated():
-        print("   ✓ Session found and valid")
-    else:
-        print("   ✗ No valid session")
-        print(f"   Session path: {client.session_path}")
-        print("   Run: asc_web_auth MCP tool to authenticate")
+    # Test JWT generation
+    if creds['api_key']:
+        print("\n2. Testing JWT generation...")
+        try:
+            token = generate_token()
+            print(f"   ✅ Token generated ({len(token)} chars)")
+        except Exception as e:
+            print(f"   ❌ Error: {e}")
 
-    # Generate sample privacy config
-    print("\n2. Sample Privacy Configurations:")
+    # Test API connection
+    if creds['api_key']:
+        print("\n3. Testing API connection...")
+        try:
+            client = ASCClient()
+            apps = client.list_apps()
+            print(f"   ✅ Connected! Found {len(apps)} app(s)")
+            for app in apps[:3]:
+                print(f"      - {app['attributes']['name']}")
+        except Exception as e:
+            print(f"   ❌ Error: {e}")
+
+    # Sample privacy configs
+    print("\n4. Sample Privacy Configurations:")
 
     print("\n   No data collected:")
     config_none = PrivacyConfig.no_data_collected()
@@ -374,16 +513,6 @@ def main():
     print("\n   Basic analytics:")
     config_basic = PrivacyConfig.basic_analytics()
     print(f"   {config_basic.to_json()}")
-
-    print("\n   User accounts + analytics:")
-    config_full = PrivacyConfig.user_accounts_analytics()
-    print(f"   {config_full.to_json()}")
-
-    # Show CLI commands
-    print("\n3. ASC CLI Commands (for app ID '1234567890'):")
-    commands = get_asc_cli_commands("1234567890", "/tmp/privacy.json")
-    for name, cmd in commands.items():
-        print(f"   {name}: {cmd}")
 
     print("\n" + "-" * 50)
     print("ASC API Client test complete!")

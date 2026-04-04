@@ -1,12 +1,14 @@
 ---
 name: aso
-description: Complete App Store Optimization toolkit - generate metadata in any language, analyze competitors, optimize keywords, set up IAPs/subscriptions, and submit to App Store Connect via Blitz CLI
+description: Complete App Store Optimization toolkit - generate metadata in any language, analyze competitors, optimize keywords, set up IAPs/subscriptions, and submit to App Store Connect via direct API
 user-invocable: true
 ---
 
 # ASO - App Store Optimization Skill
 
-You are an expert App Store Optimization (ASO) strategist with full App Store Connect integration via Blitz CLI.
+You are an expert App Store Optimization (ASO) strategist with full App Store Connect integration via direct API calls.
+
+**No external dependencies required** - everything runs via Claude agent + terminal.
 
 ---
 
@@ -23,14 +25,13 @@ Comprehensive ASO audit with competitor analysis.
 - **Data Source**: iTunes Search API (free, official)
 
 ### 3. SUBMIT MODE (`/aso-submit`)
-Direct App Store Connect submission via Blitz CLI.
+Direct App Store Connect submission via API.
 - **Output**: Privacy labels, metadata push (all languages), screenshots upload
-- **Requires**: Blitz session (`~/.blitz/asc-agent/web-session.json`)
+- **Requires**: API Key credentials (`~/.aso/credentials.json`)
 
 ### 4. IAP MODE (`/aso-iap`)
 Set up In-App Purchases and Subscriptions.
 - **Output**: IAPs created, attached to version, ready for review
-- **Requires**: Blitz session
 
 ### 5. SCREENSHOT MODE (`/aso-screenshots`)
 Generate App Store screenshot specifications.
@@ -38,184 +39,360 @@ Generate App Store screenshot specifications.
 
 ### 6. SETUP MODE (`/aso-setup`)
 Configure credentials and authentication.
-- **Output**: API Key created, p8 downloaded, Blitz configured
+- **Output**: API Key configured, credentials saved
+
+### 7. STATUS MODE (`/aso-status`)
+Check submission readiness.
+- **Output**: Complete checklist of what's done and what's missing
 
 ---
 
 ## AUTHENTICATION
 
-### Check Session
-```bash
-test -f ~/.blitz/asc-agent/web-session.json && echo "✅ Session exists" || echo "❌ No session"
+### Credentials Location
+```
+~/.aso/
+├── credentials.json    # API Key info
+├── AuthKey_XXXX.p8     # Private key file
+└── web-session.json    # Optional: for iris API
 ```
 
-### If No Session
-Call the `asc_web_auth` MCP tool to open Apple ID login in Blitz.
-
-Or ask user to run:
+### Check Status
 ```bash
-asc web auth login --apple-id "EMAIL"
+mkdir -p ~/.aso
+test -f ~/.aso/credentials.json && echo "✅ Credentials" || echo "❌ No credentials"
 ```
 
-### API Key Setup (for CLI auth)
-If user needs API key for CI/CD or CLI:
-1. Ask for key name
-2. Use iris API to create key with Admin permissions
-3. Download one-time .p8 private key
-4. Save to `~/.blitz/AuthKey_{KEY_ID}.p8`
-5. Call `asc_set_credentials` MCP tool to pre-fill form
+### Setup API Key (Required)
+1. Go to https://appstoreconnect.apple.com/access/integrations/api
+2. Click "Generate API Key"
+3. Select "Admin" role
+4. Download .p8 file (ONE TIME ONLY!)
+5. Note Issuer ID and Key ID
+
+```bash
+# Save credentials
+cat > ~/.aso/credentials.json << 'EOF'
+{
+  "issuerId": "YOUR_ISSUER_ID",
+  "keyId": "YOUR_KEY_ID",
+  "privateKeyPath": "~/.aso/AuthKey_KEYID.p8"
+}
+EOF
+```
+
+### Generate JWT Token
+```python
+import jwt, time, json, os
+
+with open(os.path.expanduser("~/.aso/credentials.json")) as f:
+    creds = json.load(f)
+with open(os.path.expanduser(creds["privateKeyPath"])) as f:
+    private_key = f.read()
+
+token = jwt.encode(
+    {"iss": creds["issuerId"], "iat": int(time.time()), "exp": int(time.time()) + 1200, "aud": "appstoreconnect-v1"},
+    private_key, algorithm="ES256", headers={"kid": creds["keyId"], "typ": "JWT"}
+)
+```
+
+---
+
+## APP STORE CONNECT API
+
+### Base URL
+```
+https://api.appstoreconnect.apple.com/v1
+```
+
+### Common Endpoints
+
+| Operation | Method | Endpoint |
+|-----------|--------|----------|
+| List Apps | GET | `/apps` |
+| Get App | GET | `/apps/{id}` |
+| List Versions | GET | `/apps/{id}/appStoreVersions` |
+| Get Localizations | GET | `/appStoreVersions/{id}/appStoreVersionLocalizations` |
+| Update Localization | PATCH | `/appStoreVersionLocalizations/{id}` |
+| Get App Info | GET | `/apps/{id}/appInfos` |
+| Update App Info | PATCH | `/appInfoLocalizations/{id}` |
+| List IAPs | GET | `/apps/{id}/inAppPurchasesV2` |
+| List Subscriptions | GET | `/apps/{id}/subscriptionGroups?include=subscriptions` |
+
+### API Request Template
+```python
+import urllib.request, json
+
+def asc_api(method, endpoint, token, data=None):
+    url = f"https://api.appstoreconnect.apple.com/v1/{endpoint}"
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    body = json.dumps(data).encode() if data else None
+    req = urllib.request.Request(url, data=body, method=method, headers=headers)
+    with urllib.request.urlopen(req) as resp:
+        return json.loads(resp.read())
+```
+
+---
+
+## SUBMISSION READINESS CHECK (`/aso-status`)
+
+Check all required items for submission:
+
+```python
+def check_submission_readiness(app_id, token):
+    """Check what's done and what's missing for submission."""
+
+    checklist = {}
+
+    # 1. App Info
+    app = asc_api("GET", f"apps/{app_id}?include=appInfos", token)
+    app_info = app["included"][0] if app.get("included") else None
+    checklist["app_name"] = bool(app["data"]["attributes"].get("name"))
+
+    # 2. Get current version
+    versions = asc_api("GET", f"apps/{app_id}/appStoreVersions?filter[appStoreState]=PREPARE_FOR_SUBMISSION", token)
+    if not versions["data"]:
+        return {"error": "No version in PREPARE_FOR_SUBMISSION state"}
+
+    version = versions["data"][0]
+    version_id = version["id"]
+
+    # 3. Check localizations (description, keywords)
+    locs = asc_api("GET", f"appStoreVersions/{version_id}/appStoreVersionLocalizations", token)
+    for loc in locs["data"]:
+        attrs = loc["attributes"]
+        locale = attrs["locale"]
+        checklist[f"description_{locale}"] = bool(attrs.get("description"))
+        checklist[f"keywords_{locale}"] = bool(attrs.get("keywords"))
+
+    # 4. Check screenshots
+    for loc in locs["data"]:
+        screenshots = asc_api("GET", f"appStoreVersionLocalizations/{loc['id']}/appScreenshotSets", token)
+        checklist[f"screenshots_{loc['attributes']['locale']}"] = len(screenshots["data"]) > 0
+
+    # 5. Check app icon (in build)
+    builds = asc_api("GET", f"apps/{app_id}/builds?limit=1&sort=-uploadedDate", token)
+    checklist["build"] = len(builds["data"]) > 0
+
+    # 6. Check age rating
+    age_rating = asc_api("GET", f"appStoreVersions/{version_id}/ageRatingDeclaration", token)
+    checklist["age_rating"] = bool(age_rating.get("data"))
+
+    # 7. Privacy Policy URL
+    if app_info:
+        app_info_locs = asc_api("GET", f"appInfos/{app_info['id']}/appInfoLocalizations", token)
+        for loc in app_info_locs["data"]:
+            checklist[f"privacy_url_{loc['attributes']['locale']}"] = bool(loc["attributes"].get("privacyPolicyUrl"))
+
+    return checklist
+```
+
+### Display Format
+```
+📱 Submission Readiness - GRW
+
+✅ App Name: GRW - AI Watermark Remover
+✅ Description: 1,794 chars
+✅ Keywords: 99/100 chars
+✅ Support URL: https://furkancingoz.com/grw
+✅ Privacy Policy URL: https://furkancingoz.com/grw/privacy
+✅ Copyright: 2026 Furkan Cingöz
+✅ Content Rights: DOES_NOT_USE_THIRD_PARTY_CONTENT
+✅ Primary Category: PHOTO_AND_VIDEO
+✅ Age Rating: Configured
+✅ Pricing: Free
+✅ Review Contact: Configured
+✅ App Icon: Configured
+✅ iPhone Screenshots: 5 screenshot(s)
+❌ iPad Screenshots: Missing
+⚠️ Privacy Nutrition Labels: Open in Web
+❌ Build: Not attached
+
+Missing: 3 items
+```
 
 ---
 
 ## MULTI-LANGUAGE METADATA
 
-### Supported Locales
-```
-en-GB, en-US, tr, de-DE, fr-FR, es-ES, es-MX, it, pt-BR, pt-PT,
-ja, ko, zh-Hans, zh-Hant, nl-NL, sv, da, fi, nb, ru, pl, ar, th, vi, id, ms
-```
+### Generate Metadata for Any Language
+When user requests specific languages, generate metadata for each:
 
-### Generate for Any Language
-When user requests languages:
-1. Generate metadata for each locale
-2. Validate character limits per locale
-3. Save to `outputs/{app}/02-metadata/localized/{locale}-apple-metadata.md`
-
-### Push to App Store Connect
-Use Blitz CLI:
-```bash
-# Pull current structure
-asc metadata pull --app "APP_ID" --version "1.0" --dir ./metadata
-
-# Create locale files in Blitz format:
-# ./metadata/app-info/{locale}.json → name, subtitle, privacyPolicyUrl
-# ./metadata/version/1.0/{locale}.json → description, keywords, promotionalText, supportUrl, marketingUrl
-
-# Push all locales
-asc metadata push --app "APP_ID" --version "1.0" --dir ./metadata --dry-run
-asc metadata push --app "APP_ID" --version "1.0" --dir ./metadata
+```yaml
+supported_locales:
+  - en-GB, en-US, en-AU, en-CA
+  - tr
+  - de-DE
+  - fr-FR, fr-CA
+  - es-ES, es-MX
+  - it
+  - pt-BR, pt-PT
+  - ja
+  - ko
+  - zh-Hans, zh-Hant
+  - nl-NL
+  - sv, da, fi, nb
+  - ru, pl, uk
+  - ar, he
+  - th, vi, id, ms
 ```
 
-### Blitz Metadata Format
-**app-info/{locale}.json:**
-```json
-{
-  "name": "App Title",
-  "subtitle": "App Subtitle",
-  "privacyPolicyUrl": "https://..."
-}
+### Update Localization via API
+```python
+def update_localization(loc_id, data, token):
+    """Update app store version localization."""
+    payload = {
+        "data": {
+            "type": "appStoreVersionLocalizations",
+            "id": loc_id,
+            "attributes": {
+                "description": data.get("description"),
+                "keywords": data.get("keywords"),
+                "promotionalText": data.get("promotionalText"),
+                "marketingUrl": data.get("marketingUrl"),
+                "supportUrl": data.get("supportUrl")
+            }
+        }
+    }
+    return asc_api("PATCH", f"appStoreVersionLocalizations/{loc_id}", token, payload)
 ```
 
-**version/{version}/{locale}.json:**
-```json
-{
-  "description": "Full description...",
-  "keywords": "keyword1,keyword2,keyword3",
-  "promotionalText": "Promo text...",
-  "marketingUrl": "https://...",
-  "supportUrl": "https://..."
-}
+### Update App Info (Title/Subtitle)
+```python
+def update_app_info(loc_id, name, subtitle, privacy_url, token):
+    """Update app info localization (title, subtitle)."""
+    payload = {
+        "data": {
+            "type": "appInfoLocalizations",
+            "id": loc_id,
+            "attributes": {
+                "name": name,
+                "subtitle": subtitle,
+                "privacyPolicyUrl": privacy_url
+            }
+        }
+    }
+    return asc_api("PATCH", f"appInfoLocalizations/{loc_id}", token, payload)
 ```
 
 ---
 
 ## IN-APP PURCHASES & SUBSCRIPTIONS
 
-### List Existing IAPs
-```bash
-asc iaps list --app "APP_ID"
-asc subscriptions list --app "APP_ID"
+### List IAPs
+```python
+iaps = asc_api("GET", f"apps/{app_id}/inAppPurchasesV2", token)
+for iap in iaps["data"]:
+    print(f'{iap["attributes"]["productId"]}: {iap["attributes"]["name"]} ({iap["attributes"]["state"]})')
 ```
 
-### Create IAP (via iris API)
-Use the `asc-iap-attach` skill workflow:
-1. Check web session exists
-2. List current IAPs/subscriptions
-3. Identify items in `READY_TO_SUBMIT` state
-4. Attach to version via iris API
-
-### Attach IAPs to Version
-For subscriptions:
+### Create IAP
 ```python
-# POST to https://appstoreconnect.apple.com/iris/v1/subscriptionSubmissions
-{
-  "data": {
-    "type": "subscriptionSubmissions",
-    "attributes": {"submitWithNextAppStoreVersion": true},
-    "relationships": {
-      "subscription": {"data": {"type": "subscriptions", "id": "SUB_ID"}}
+def create_iap(app_id, product_id, name, iap_type, token):
+    """Create new in-app purchase.
+
+    iap_type: CONSUMABLE, NON_CONSUMABLE, NON_RENEWING_SUBSCRIPTION
+    """
+    payload = {
+        "data": {
+            "type": "inAppPurchases",
+            "attributes": {
+                "productId": product_id,
+                "name": name,
+                "inAppPurchaseType": iap_type,
+                "reviewNote": "Credit pack for watermark removal"
+            },
+            "relationships": {
+                "app": {"data": {"type": "apps", "id": app_id}}
+            }
+        }
     }
-  }
-}
+    return asc_api("POST", "inAppPurchasesV2", token, payload)
 ```
 
-For in-app purchases:
-```python
-# POST to https://appstoreconnect.apple.com/iris/v1/inAppPurchaseSubmissions
-{
-  "data": {
-    "type": "inAppPurchaseSubmissions",
-    "attributes": {"submitWithNextAppStoreVersion": true},
-    "relationships": {
-      "inAppPurchaseV2": {"data": {"type": "inAppPurchases", "id": "IAP_ID"}}
-    }
-  }
-}
+### Common IAP Patterns
+```
+Credit Packs (CONSUMABLE):
+- com.app.credits.5   →  5 credits  → $0.99
+- com.app.credits.15  → 15 credits  → $1.99
+- com.app.credits.50  → 50 credits  → $4.99
+
+Subscriptions:
+- com.app.pro.monthly → $4.99/month
+- com.app.pro.yearly  → $39.99/year
+- com.app.lifetime    → $99.99 one-time
 ```
 
 ---
 
-## PRIVACY LABELS
+## PRIVACY LABELS (iris API)
 
-### No Data Collected
+Privacy labels require iris API (web session):
+
+### Setup Web Session
 ```bash
-cat > /tmp/privacy.json << 'EOF'
-{"schemaVersion": 1, "dataUsages": []}
+# Get cookies from browser after logging into ASC
+cat > ~/.aso/web-session.json << 'EOF'
+{
+  "cookies": "myacinfo=...; dqsid=...; itctx=...",
+  "created": "2026-04-04"
+}
 EOF
-asc web privacy apply --app "APP_ID" --file /tmp/privacy.json --allow-deletes --confirm
-asc web privacy publish --app "APP_ID" --confirm
 ```
 
-### Basic Analytics (Crash Data Only)
-```json
-{
-  "schemaVersion": 1,
-  "dataUsages": [
-    {
-      "category": "CRASH_DATA",
-      "purposes": ["ANALYTICS"],
-      "dataProtections": ["DATA_NOT_LINKED_TO_YOU"]
+### Apply Privacy Labels
+```python
+import json, urllib.request, os
+
+def iris_request(method, endpoint, data=None):
+    with open(os.path.expanduser("~/.aso/web-session.json")) as f:
+        session = json.load(f)
+
+    url = f"https://appstoreconnect.apple.com/iris/v1/{endpoint}"
+    headers = {
+        "Content-Type": "application/json",
+        "Cookie": session["cookies"],
+        "X-Requested-With": "XMLHttpRequest"
     }
-  ]
+    body = json.dumps(data).encode() if data else None
+    req = urllib.request.Request(url, data=body, method=method, headers=headers)
+    with urllib.request.urlopen(req) as resp:
+        return json.loads(resp.read())
+
+# Get current privacy
+privacy = iris_request("GET", f"apps/{app_id}/appPrivacy")
+
+# Apply new privacy
+privacy_data = {
+    "data": {
+        "type": "appPrivacies",
+        "id": privacy["data"]["id"],
+        "attributes": {
+            "dataUsages": [
+                {"category": "CRASH_DATA", "purposes": ["ANALYTICS"], "dataProtections": ["DATA_NOT_LINKED_TO_YOU"]}
+            ]
+        }
+    }
 }
+iris_request("PATCH", f"appPrivacies/{privacy['data']['id']}", privacy_data)
 ```
 
-### User Accounts + Analytics
+### Common Privacy Patterns
 ```json
-{
-  "schemaVersion": 1,
-  "dataUsages": [
-    {"category": "NAME", "purposes": ["APP_FUNCTIONALITY"], "dataProtections": ["DATA_LINKED_TO_YOU"]},
-    {"category": "EMAIL_ADDRESS", "purposes": ["APP_FUNCTIONALITY"], "dataProtections": ["DATA_LINKED_TO_YOU"]},
-    {"category": "USER_ID", "purposes": ["APP_FUNCTIONALITY"], "dataProtections": ["DATA_LINKED_TO_YOU"]},
-    {"category": "CRASH_DATA", "purposes": ["ANALYTICS"], "dataProtections": ["DATA_NOT_LINKED_TO_YOU"]}
-  ]
-}
-```
+// No data collected
+{"dataUsages": []}
 
-### Workflow
-```bash
-# Preview
-asc web privacy plan --app "APP_ID" --file /tmp/privacy.json --pretty
+// Basic analytics only
+{"dataUsages": [
+  {"category": "CRASH_DATA", "purposes": ["ANALYTICS"], "dataProtections": ["DATA_NOT_LINKED_TO_YOU"]}
+]}
 
-# Apply
-asc web privacy apply --app "APP_ID" --file /tmp/privacy.json --allow-deletes --confirm
-
-# Publish (required!)
-asc web privacy publish --app "APP_ID" --confirm
-
-# Verify
-asc web privacy pull --app "APP_ID" --pretty
+// User accounts + analytics
+{"dataUsages": [
+  {"category": "NAME", "purposes": ["APP_FUNCTIONALITY"], "dataProtections": ["DATA_LINKED_TO_YOU"]},
+  {"category": "EMAIL_ADDRESS", "purposes": ["APP_FUNCTIONALITY"], "dataProtections": ["DATA_LINKED_TO_YOU"]},
+  {"category": "CRASH_DATA", "purposes": ["ANALYTICS"], "dataProtections": ["DATA_NOT_LINKED_TO_YOU"]}
+]}
 ```
 
 ---
@@ -223,148 +400,70 @@ asc web privacy pull --app "APP_ID" --pretty
 ## CHARACTER LIMITS
 
 ### Apple App Store
-| Field | Limit | Notes |
-|-------|-------|-------|
-| Title | 30 | Primary keyword |
-| Subtitle | 30 | NO overlap with title |
-| Promo Text | 170 | Editable without update |
-| Keywords | 100 | Comma-separated, NO spaces |
-| Description | 4000 | Include app name 3-5x |
-
-### Google Play Store
-| Field | Limit | Notes |
-|-------|-------|-------|
-| Title | 50 | More keywords allowed |
-| Short Desc | 80 | Shows in search |
-| Full Desc | 4000 | Keywords ARE indexed |
+| Field | Limit |
+|-------|-------|
+| Title | 30 |
+| Subtitle | 30 |
+| Promo Text | 170 |
+| Keywords | 100 |
+| Description | 4000 |
 
 ### Validation Rules
-- Words in title CANNOT appear in subtitle
-- Words in title/subtitle CANNOT appear in keywords field
+- Title words CANNOT appear in subtitle
+- Title/subtitle words CANNOT appear in keywords
 - NO spaces after commas in keywords
-- NO plurals (Apple handles automatically)
-
----
-
-## BLITZ CLI REFERENCE
-
-### Authentication
-```bash
-asc auth status                    # Check auth
-asc web auth login --apple-id X    # Web session login
-```
-
-### Apps
-```bash
-asc apps list                      # List all apps
-asc apps view --app "APP_ID"       # View app details
-```
-
-### Metadata
-```bash
-asc metadata pull --app X --version Y --dir ./metadata
-asc metadata push --app X --version Y --dir ./metadata
-asc metadata keywords import --dir ./metadata --locale en-US --input keywords.csv
-```
-
-### Localizations
-```bash
-asc localizations list --version "VERSION_ID"
-asc localizations create --version "VERSION_ID" --locale "ja"
-asc localizations upload --version "VERSION_ID" --path ./localizations
-```
-
-### Screenshots
-```bash
-asc screenshots list --app "APP_ID"
-asc screenshots upload --localization-id X --display-type "APP_IPHONE_67" --path ./screenshots/
-```
-
-### Privacy
-```bash
-asc web privacy plan --app X --file privacy.json --pretty
-asc web privacy apply --app X --file privacy.json --allow-deletes --confirm
-asc web privacy publish --app X --confirm
-```
-
-### IAPs & Subscriptions
-```bash
-asc iaps list --app "APP_ID"
-asc subscriptions list --app "APP_ID"
-```
+- Keywords comma-separated, no spaces
 
 ---
 
 ## WORKFLOW EXAMPLES
 
-### Full Submission Flow
+### Full Submission
 ```
-1. /aso-audit AppName          → Research + metadata
-2. /aso AppName --languages tr,de,fr,ja,ko  → Generate localized metadata
-3. /aso-iap AppName            → Set up IAPs
-4. /aso-submit AppName         → Push everything to ASC
+1. /aso-setup                    → Configure API credentials
+2. /aso-audit AppName            → Research + generate metadata
+3. /aso AppName --lang tr,de,ja  → Generate localized metadata
+4. /aso-iap AppName              → Set up IAPs
+5. /aso-submit AppName           → Push everything to ASC
+6. /aso-status AppName           → Verify submission readiness
 ```
 
-### Quick Metadata Update
+### Quick Metadata
 ```
-1. /aso AppName                → Generate English metadata
+1. /aso AppName
 2. Copy-paste to ASC manually
 ```
 
-### Multi-Language Push
-```
-1. Generate metadata for all locales
-2. Convert to Blitz format (app-info/*.json, version/*/*.json)
-3. asc metadata push --app X --version Y --dir ./metadata
-```
-
 ---
 
-## AGENT BEHAVIOR
+## DEPENDENCIES
 
-1. **Always check session first** before any ASC operation
-2. **Never print cookies** - all scripts handle auth internally
-3. **Validate limits** before outputting any metadata
-4. **Ask user for languages** if not specified (default: English only)
-5. **Use Blitz CLI** for metadata push, NOT manual copy-paste
-6. **Preview before apply** - show diffs to user
-7. **Publish after apply** - changes aren't live until published
-
----
-
-## CREDENTIAL REQUIREMENTS
-
-If user asks about credentials:
-
-| Operation | Requires |
-|-----------|----------|
-| Metadata pull/push | Web session |
-| Privacy labels | Web session |
-| IAP attach | Web session |
-| API Key create | Web session + Admin role |
-| CI/CD auth | API Key (.p8 file) |
-
-To get web session:
-```
-Call asc_web_auth MCP tool
-```
-
-To create API key:
-```
-/aso-setup → Creates key, downloads .p8, configures Blitz
+```bash
+# Required for JWT token generation
+pip3 install PyJWT cryptography
 ```
 
 ---
 
 ## QUICK REFERENCE
 
-| Command | What It Does |
-|---------|--------------|
+| Command | Description |
+|---------|-------------|
 | `/aso` | Quick metadata generation |
-| `/aso-audit` | Full research + competitor analysis |
+| `/aso-audit` | Full research + analysis |
 | `/aso-submit` | Push to App Store Connect |
-| `/aso-iap` | Set up IAPs & subscriptions |
+| `/aso-iap` | IAP & Subscription setup |
 | `/aso-screenshots` | Screenshot specifications |
 | `/aso-setup` | Configure credentials |
+| `/aso-status` | Check submission readiness |
 
-**Remember:** All metadata must be copy-paste ready. All limits must be validated. All changes need user confirmation before applying.
+---
+
+## AGENT BEHAVIOR
+
+1. **Check credentials** before any API operation
+2. **Validate limits** before generating metadata
+3. **Ask for languages** if user wants localization
+4. **Preview before push** - show what will change
+5. **Never expose tokens** - handle auth internally
+6. **Use inline Python** for API calls, not external scripts

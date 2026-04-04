@@ -8,8 +8,11 @@ A comprehensive **App Store Optimization (ASO) skill** for Claude Code that comb
 
 1. **Quick Metadata Generation** (`/aso`) - Fast listing optimization
 2. **Full ASO Audit** (`/aso-audit`) - Comprehensive analysis with competitor research
-3. **App Store Connect Submission** (`/aso-submit`) - Direct ASC integration
-4. **Screenshot Generation** (`/aso-screenshots`) - AI-powered screenshot creation
+3. **App Store Connect Submission** (`/aso-submit`) - Direct ASC API integration
+4. **Submission Readiness Check** (`/aso-status`) - Verify all requirements
+5. **IAP & Subscription Setup** (`/aso-iap`) - In-app purchase configuration
+6. **Screenshot Generation** (`/aso-screenshots`) - AI-powered screenshot creation
+7. **Credential Setup** (`/aso-setup`) - Configure API authentication
 
 ## Architecture
 
@@ -19,11 +22,15 @@ aso-skill/
 ├── CLAUDE.md             # This file
 ├── agents/
 │   ├── aso-quick.md      # Fast metadata agent (sonnet)
-│   └── aso-full.md       # Full audit orchestrator (opus)
+│   ├── aso-full.md       # Full audit orchestrator (opus)
+│   └── asc-api.md        # ASC API agent
 ├── commands/
 │   ├── aso.md            # /aso command
 │   ├── aso-audit.md      # /aso-audit command
 │   ├── aso-submit.md     # /aso-submit command
+│   ├── aso-iap.md        # /aso-iap command
+│   ├── aso-setup.md      # /aso-setup command
+│   ├── aso-status.md     # /aso-status command
 │   └── aso-screenshots.md # /aso-screenshots command
 ├── lib/
 │   ├── itunes_api.py     # iTunes Search API client
@@ -51,6 +58,32 @@ cp -r aso-skill /path/to/project/.claude/skills/aso
 ```bash
 ls ~/.claude/skills/aso/
 # Should show: SKILL.md, agents/, commands/, lib/, templates/
+```
+
+## Credentials
+
+All credentials stored at `~/.aso/`:
+
+```
+~/.aso/
+├── credentials.json    # API Key (issuerId, keyId, privateKeyPath)
+├── AuthKey_XXXX.p8     # Private key file
+└── web-session.json    # Optional: for iris API features
+```
+
+### API Key Authentication
+```python
+import jwt, time, json, os
+
+def generate_token():
+    with open(os.path.expanduser("~/.aso/credentials.json")) as f:
+        creds = json.load(f)
+    with open(os.path.expanduser(creds["privateKeyPath"])) as f:
+        pk = f.read()
+    return jwt.encode(
+        {"iss": creds["issuerId"], "iat": int(time.time()), "exp": int(time.time())+1200, "aud": "appstoreconnect-v1"},
+        pk, algorithm="ES256", headers={"kid": creds["keyId"], "typ": "JWT"}
+    )
 ```
 
 ## Key Design Decisions
@@ -119,15 +152,14 @@ Returns prioritized keywords with placement recommendations.
 
 ### asc_api.py
 ```python
-from lib.asc_api import ASCClient, PrivacyConfig
+from lib.asc_api import ASCClient, generate_token
 
-client = ASCClient()
-if client.is_authenticated():
-    config = PrivacyConfig.basic_analytics()
-    # Use asc CLI for actual submission
+token = generate_token()
+client = ASCClient(token)
+apps = client.list_apps()
 ```
 
-Requires web session from Blitz app or `asc_web_auth` MCP tool.
+Requires PyJWT: `pip3 install PyJWT cryptography`
 
 ### screenshot_composer.py
 ```python
@@ -152,6 +184,9 @@ Requires Pillow: `pip install Pillow`
 | `/aso` | Quick metadata generation | 2-5 min |
 | `/aso-audit` | Full ASO audit | 20-30 min |
 | `/aso-submit` | ASC submission | 5-10 min |
+| `/aso-iap` | IAP setup | 5-10 min |
+| `/aso-setup` | Configure credentials | 2 min |
+| `/aso-status` | Check readiness | 1 min |
 | `/aso-screenshots` | Screenshot generation | 15-30 min |
 
 ## Workflow Patterns
@@ -176,6 +211,17 @@ User: /aso-audit TaskFlow
 → Output to outputs/TaskFlow/
 ```
 
+### App Store Connect Submission
+```
+User: /aso-submit TaskFlow
+→ Check credentials (~/.aso/credentials.json)
+→ Generate JWT token
+→ Apply privacy labels (via iris API)
+→ Push metadata (all languages)
+→ Upload screenshots
+→ Verify with /aso-status
+```
+
 ### Screenshot Generation
 ```
 User: /aso-screenshots
@@ -188,6 +234,31 @@ User: /aso-screenshots
 → Final Export
 ```
 
+## API Endpoints
+
+### Public API (JWT Auth)
+Base URL: `https://api.appstoreconnect.apple.com/v1`
+
+| Operation | Method | Endpoint |
+|-----------|--------|----------|
+| List Apps | GET | `/apps` |
+| Get App | GET | `/apps/{id}` |
+| List Versions | GET | `/apps/{id}/appStoreVersions` |
+| Get Localizations | GET | `/appStoreVersions/{id}/appStoreVersionLocalizations` |
+| Update Localization | PATCH | `/appStoreVersionLocalizations/{id}` |
+| Get App Info | GET | `/apps/{id}/appInfos` |
+| Update App Info | PATCH | `/appInfoLocalizations/{id}` |
+| List IAPs | GET | `/apps/{id}/inAppPurchasesV2` |
+| List Subscriptions | GET | `/apps/{id}/subscriptionGroups?include=subscriptions` |
+
+### iris API (Web Session)
+Base URL: `https://appstoreconnect.apple.com/iris/v1`
+
+Used for:
+- Privacy nutrition labels
+- IAP/Subscription attachment to version
+- Features not in public API
+
 ## Integration Points
 
 ### Astro MCP (Optional)
@@ -196,11 +267,6 @@ When available, use these tools:
 - `get_app_keywords` - Current rankings
 - `search_rankings` - Track positions
 - `get_keyword_suggestions` - AI suggestions
-
-### App Store Connect
-- Web session at `~/.blitz/asc-agent/web-session.json`
-- Use `asc_web_auth` MCP tool to authenticate
-- CLI commands: `asc web privacy plan/apply/publish`
 
 ### Gemini MCP (Screenshots)
 - Required for AI screenshot enhancement
@@ -228,7 +294,6 @@ Each output should score ≥ 4/5 on:
 This skill combines best practices from:
 - [alirezarezvani/claude-code-aso-skill](https://github.com/alirezarezvani/claude-code-aso-skill) - Agent system, structured outputs
 - [Mehrozsheikh/aso-appstore-listing-skill](https://github.com/Mehrozsheikh/aso-appstore-listing-skill) - Minimal skill format, Astro MCP
-- [blitzdotdev/blitz-mac](https://github.com/blitzdotdev/blitz-mac) - ASC API integration
 - [adamlyttleapps/claude-skill-aso-appstore-screenshots](https://github.com/adamlyttleapps/claude-skill-aso-appstore-screenshots) - Screenshot generation
 
 ## Troubleshooting
@@ -244,8 +309,9 @@ This skill combines best practices from:
 → Prioritize high-value keywords
 
 ### ASC Authentication Failed
-→ Call `asc_web_auth` MCP tool
-→ Or run: `asc web auth login --apple-id EMAIL`
+→ Check ~/.aso/credentials.json
+→ Verify API key is Admin role
+→ Regenerate token
 
 ### Screenshot Generation Failed
 → Check Pillow installed: `pip install Pillow`

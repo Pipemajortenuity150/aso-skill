@@ -11,6 +11,9 @@ Complete guide to using ASO Skill for App Store Optimization.
 | `/aso` | Quick metadata | 2-5 min |
 | `/aso-audit` | Full analysis | 20-30 min |
 | `/aso-submit` | ASC submission | 5-10 min |
+| `/aso-iap` | IAP setup | 5-10 min |
+| `/aso-setup` | Configure credentials | 2 min |
+| `/aso-status` | Check readiness | 1 min |
 | `/aso-screenshots` | Generate screenshots | 15-30 min |
 
 ---
@@ -138,9 +141,9 @@ outputs/[app-name]/
 
 ### Prerequisites
 
-- Blitz app installed and running
-- Authenticated with Apple ID
+- API Key configured (`~/.aso/credentials.json`)
 - App already created in ASC
+- Build uploaded
 
 ### Basic Usage
 
@@ -176,7 +179,7 @@ User accounts:
 /aso-submit FitFlow
 
 1. ✓ Checking authentication...
-2. ✓ Session valid
+2. ✓ API Key valid
 
 3. 📋 Privacy Labels
    Does your app collect data? [Yes/No]
@@ -192,7 +195,128 @@ Ready to submit!
 
 ---
 
-## Command 4: `/aso-screenshots` - Screenshot Generation
+## Command 4: `/aso-status` - Check Readiness
+
+### Basic Usage
+
+```
+/aso-status [app-name]
+```
+
+### What It Does
+
+Checks all required items for App Store submission:
+
+- App Name
+- Description
+- Keywords
+- Support URL
+- Privacy Policy URL
+- Copyright
+- Content Rights
+- Primary Category
+- Age Rating
+- Pricing
+- Review Contact
+- App Icon
+- iPhone Screenshots
+- iPad Screenshots
+- Privacy Nutrition Labels
+- Build
+
+### Output Example
+
+```
+📱 Submission Readiness - GRW
+
+App Identity
+────────────────────────────────────────
+  App Name:         GRW - AI Watermark Remover
+  Bundle ID:        com.furkancingoz.gwr
+  App ID:           6761651599
+  Primary Locale:   en-GB
+
+Version 1.0 - PREPARE_FOR_SUBMISSION
+────────────────────────────────────────
+
+✅ App Name              GRW - AI Watermark Remover
+✅ Description           1,794 characters
+✅ Keywords              99/100 characters
+✅ Support URL           https://furkancingoz.com/grw
+✅ Privacy Policy URL    https://furkancingoz.com/grw/privacy
+❌ iPad Screenshots      Missing → Fix
+⚠️ Privacy Labels        Not published → Open in Web
+❌ Build                 Not attached → Fix
+
+Summary: 14/17 items complete
+Missing: iPad Screenshots, Privacy Labels, Build
+```
+
+---
+
+## Command 5: `/aso-iap` - IAP Setup
+
+### Prerequisites
+
+- API Key configured
+- App created in App Store Connect
+
+### Basic Usage
+
+```
+/aso-iap [app-name]
+```
+
+### What It Does
+
+1. **Lists** current IAPs and subscriptions
+2. **Creates** new IAPs or subscriptions
+3. **Attaches** items to current version
+4. **Verifies** submission readiness
+
+### Common IAP Patterns
+
+```
+Credit Packs (Consumable):
+- 5 Credits: $0.99 (com.app.credits.5)
+- 15 Credits: $1.99 (com.app.credits.15)
+- 50 Credits: $4.99 (com.app.credits.50)
+
+Subscriptions:
+- Monthly Pro: $4.99/month
+- Yearly Pro: $39.99/year (save 33%)
+- Lifetime: $99.99 one-time
+```
+
+---
+
+## Command 6: `/aso-setup` - Configure Credentials
+
+### Basic Usage
+
+```
+/aso-setup
+```
+
+### What It Does
+
+1. Guides you to create API Key in App Store Connect
+2. Saves credentials to `~/.aso/credentials.json`
+3. Tests API connection
+4. Optionally configures web session for iris API
+
+### Credentials Location
+
+```
+~/.aso/
+├── credentials.json    # API Key info
+├── AuthKey_XXXX.p8     # Private key file
+└── web-session.json    # Optional: for iris API
+```
+
+---
+
+## Command 7: `/aso-screenshots` - Screenshot Generation
 
 ### Prerequisites
 
@@ -269,17 +393,23 @@ screenshots/
 ### New App Launch
 
 ```bash
-# 1. Full audit
+# 1. Setup credentials
+/aso-setup
+
+# 2. Full audit
 /aso-audit MyNewApp
 
-# 2. Review outputs
+# 3. Review outputs
 cat outputs/MyNewApp/00-MASTER-ACTION-PLAN.md
 
-# 3. Generate screenshots
+# 4. Generate screenshots
 /aso-screenshots
 
-# 4. Submit to stores
+# 5. Submit to stores
 /aso-submit MyNewApp
+
+# 6. Check status
+/aso-status MyNewApp
 ```
 
 ### Quick Metadata Update
@@ -386,6 +516,16 @@ claude --reload
 - Check internet connection
 - Retry after 5 seconds
 - Automatic fallback to WebFetch
+
+### "App Store Connect 401"
+
+```bash
+# Check credentials
+cat ~/.aso/credentials.json
+
+# Re-run setup
+/aso-setup
+```
 
 ### "Screenshot generation failed"
 

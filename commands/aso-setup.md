@@ -1,182 +1,270 @@
 # /aso-setup Command
 
-Configure App Store Connect credentials and authentication.
+Configure App Store Connect authentication for ASO skill.
 
 ## Trigger
 - `/aso-setup`
-- "configure ASC", "set up App Store Connect", "create API key"
+- "configure ASC", "set up authentication", "ASC login"
+
+## Authentication Options
+
+### Option 1: API Key (Recommended for CI/CD)
+- Create key in App Store Connect
+- Download .p8 file (one-time!)
+- Configure locally
+
+### Option 2: Web Session (For iris API features)
+- Login to App Store Connect in browser
+- Export cookies
+- Save to config
+
+---
 
 ## Workflow
 
 ### 1. Check Current Status
 
 ```bash
-echo "=== Blitz Installation ==="
-ls ~/.blitz/ 2>/dev/null || echo "Blitz not installed"
+mkdir -p ~/.aso
 
-echo "=== Web Session ==="
-test -f ~/.blitz/asc-agent/web-session.json && echo "✅ Session exists" || echo "❌ No session"
+echo "=== ASO Credentials Status ==="
 
-echo "=== API Keys ==="
-ls ~/.blitz/AuthKey_*.p8 2>/dev/null || echo "No API keys"
+if [ -f ~/.aso/credentials.json ]; then
+    echo "✅ API Key configured"
+    cat ~/.aso/credentials.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'  Key ID: {d[\"keyId\"]}')"
+else
+    echo "❌ No API Key"
+fi
 
-echo "=== ASC CLI ==="
-~/.blitz/bin/asc auth status 2>/dev/null || echo "Not authenticated"
+if [ -f ~/.aso/web-session.json ]; then
+    echo "✅ Web session exists"
+else
+    echo "❌ No web session"
+fi
+
+ls ~/.aso/*.p8 2>/dev/null && echo "✅ .p8 file found" || echo "❌ No .p8 file"
 ```
 
-### 2. Options Menu
+### 2. Ask User Which Method
 
-Present options:
-1. **Web Session Login** - For web-based operations (metadata, privacy labels)
-2. **Create API Key** - For CLI/CI/CD operations
-3. **Check Status** - Show current auth state
+```
+📱 App Store Connect Setup
 
-### 3a. Web Session Login
+Which authentication method?
+
+1. API Key - For metadata, apps, IAPs (recommended)
+2. Web Session - For privacy labels, special operations
+3. Both - Full access
+```
+
+---
+
+## Option 1: API Key Setup
+
+### Step 1: Guide User to Create Key
+
+```
+📋 Create API Key in App Store Connect:
+
+1. Go to: https://appstoreconnect.apple.com/access/integrations/api
+2. Click "Generate API Key" (or "+" button)
+3. Enter a name (e.g., "ASO-Skill-Key")
+4. Select "Admin" access
+5. Click "Generate"
+6. IMPORTANT: Download the .p8 file immediately (one-time only!)
+7. Note the Key ID and Issuer ID shown on page
+
+Then provide:
+- Issuer ID: (shown at top of page)
+- Key ID: (shown next to key name)
+- .p8 file path: (where you saved it)
+```
+
+### Step 2: Save Credentials
+
+After user provides info:
 
 ```bash
-# Option 1: Via MCP tool
-Call asc_web_auth MCP tool
+# Move .p8 to secure location
+mkdir -p ~/.aso
+cp "/path/to/AuthKey_XXXX.p8" ~/.aso/
+chmod 600 ~/.aso/AuthKey_*.p8
 
-# Option 2: Via CLI
-asc web auth login --apple-id "user@email.com"
+# Create credentials.json
+cat > ~/.aso/credentials.json << EOF
+{
+  "issuerId": "USER_PROVIDED_ISSUER_ID",
+  "keyId": "USER_PROVIDED_KEY_ID",
+  "privateKeyPath": "~/.aso/AuthKey_KEYID.p8"
+}
+EOF
+chmod 600 ~/.aso/credentials.json
 ```
 
-This opens Apple ID login in Blitz, handles 2FA, and saves session.
-
-### 3b. Create API Key
-
-**Step 1: Ask for key name**
-```
-What would you like to name this API key?
-(e.g., "Claude-Code-Key", "CI-CD-Key")
-```
-
-**Step 2: Create key via iris API**
+### Step 3: Test Connection
 
 ```python
-import json, urllib.request, base64, os, time
+import jwt
+import time
+import json
+import os
+import urllib.request
 
-KEY_NAME = "USER_PROVIDED_NAME"
+# Load credentials
+with open(os.path.expanduser("~/.aso/credentials.json")) as f:
+    creds = json.load(f)
 
-# Read session
-session_path = os.path.expanduser('~/.blitz/asc-agent/web-session.json')
-with open(session_path) as f:
-    store = json.loads(f.read())
+with open(os.path.expanduser(creds["privateKeyPath"])) as f:
+    private_key = f.read()
 
-session = store['sessions'][store['last_key']]
-cookie_str = '; '.join(
-    f'{c["name"]}={c["value"]}'
-    for cl in session['cookies'].values() for c in cl
-    if c.get('name') and c.get('value')
+# Generate token
+now = int(time.time())
+payload = {"iss": creds["issuerId"], "iat": now, "exp": now + 1200, "aud": "appstoreconnect-v1"}
+token = jwt.encode(payload, private_key, algorithm="ES256", headers={"kid": creds["keyId"], "typ": "JWT"})
+
+# Test API
+req = urllib.request.Request(
+    "https://api.appstoreconnect.apple.com/v1/apps?limit=1",
+    headers={"Authorization": f"Bearer {token}"}
 )
+try:
+    resp = urllib.request.urlopen(req)
+    data = json.loads(resp.read())
+    print(f"✅ API Key works! Found {len(data['data'])} app(s)")
+except Exception as e:
+    print(f"❌ API Key failed: {e}")
+```
 
-headers = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    'X-Requested-With': 'XMLHttpRequest',
-    'Origin': 'https://appstoreconnect.apple.com',
-    'Referer': 'https://appstoreconnect.apple.com/',
-    'Cookie': cookie_str
+---
+
+## Option 2: Web Session Setup
+
+### Step 1: Guide User to Get Cookies
+
+```
+📋 Export Web Session Cookies:
+
+1. Open: https://appstoreconnect.apple.com
+2. Login with Apple ID (complete 2FA if needed)
+3. Open Developer Tools (F12 or Cmd+Option+I)
+4. Go to: Application → Cookies → appstoreconnect.apple.com
+5. Copy these cookies:
+   - myacinfo
+   - dqsid
+   - itctx
+   - Any cookie starting with "DES"
+
+Format as: name1=value1; name2=value2; ...
+```
+
+### Step 2: Save Session
+
+```bash
+# Create session file
+cat > ~/.aso/web-session.json << 'EOF'
+{
+  "cookies": "USER_PROVIDED_COOKIE_STRING",
+  "created": "2026-04-04T12:00:00Z"
 }
+EOF
+chmod 600 ~/.aso/web-session.json
+```
 
-# Create key
-create_body = json.dumps({
-    'data': {
-        'type': 'apiKeys',
-        'attributes': {
-            'nickname': KEY_NAME,
-            'roles': ['ADMIN'],
-            'allAppsVisible': True,
-            'keyType': 'PUBLIC_API'
-        }
+### Step 3: Test Session
+
+```python
+import json
+import os
+import urllib.request
+
+with open(os.path.expanduser("~/.aso/web-session.json")) as f:
+    session = json.load(f)
+
+req = urllib.request.Request(
+    "https://appstoreconnect.apple.com/iris/v1/apps?limit=1",
+    headers={
+        "Cookie": session["cookies"],
+        "Accept": "application/json",
+        "X-Requested-With": "XMLHttpRequest"
     }
-}).encode()
-
-req = urllib.request.Request(
-    'https://appstoreconnect.apple.com/iris/v1/apiKeys',
-    data=create_body, method='POST', headers=headers)
-resp = urllib.request.urlopen(req)
-create_data = json.loads(resp.read().decode())
-
-key_id = create_data['data']['id']
-
-# Download private key (ONE TIME ONLY!)
-time.sleep(0.5)
-req = urllib.request.Request(
-    f'https://appstoreconnect.apple.com/iris/v1/apiKeys/{key_id}?fields%5BapiKeys%5D=privateKey',
-    method='GET', headers=headers)
-resp = urllib.request.urlopen(req)
-dl_data = json.loads(resp.read().decode())
-
-pk_b64 = dl_data['data']['attributes']['privateKey']
-private_key_pem = base64.b64decode(pk_b64).decode()
-
-# Get issuer ID
-time.sleep(0.35)
-req = urllib.request.Request(
-    f'https://appstoreconnect.apple.com/iris/v1/apiKeys/{key_id}?include=provider',
-    method='GET', headers=headers)
-resp = urllib.request.urlopen(req)
-provider_data = json.loads(resp.read().decode())
-issuer_id = provider_data['data']['relationships']['provider']['data']['id']
-
-# Save .p8 file
-p8_path = os.path.expanduser(f'~/.blitz/AuthKey_{key_id}.p8')
-with open(p8_path, 'w') as f:
-    f.write(private_key_pem)
-os.chmod(p8_path, 0o600)
-
-print(f'Key ID: {key_id}')
-print(f'Issuer ID: {issuer_id}')
-print(f'Private Key: {p8_path}')
+)
+try:
+    resp = urllib.request.urlopen(req)
+    data = json.loads(resp.read())
+    print(f"✅ Web session works! Found {len(data['data'])} app(s)")
+except urllib.error.HTTPError as e:
+    if e.code == 401:
+        print("❌ Session expired or invalid")
+    else:
+        print(f"❌ Error: {e.code}")
 ```
 
-**Step 3: Configure CLI**
-```bash
-asc auth login --key-id KEY_ID --issuer-id ISSUER_ID --private-key-path ~/.blitz/AuthKey_KEY_ID.p8
-```
+---
 
-**Step 4: Pre-fill Blitz form**
-```
-Call asc_set_credentials MCP tool with:
-- issuerId: ISSUER_ID
-- keyId: KEY_ID
-- privateKeyPath: ~/.blitz/AuthKey_KEY_ID.p8
-```
+## Quick Setup Script
 
-### 4. Verify Setup
+One-command setup for API Key:
 
 ```bash
-asc auth status
-asc apps list | head -5
+read -p "Issuer ID: " ISSUER_ID
+read -p "Key ID: " KEY_ID
+read -p "Path to .p8 file: " P8_PATH
+
+mkdir -p ~/.aso
+cp "$P8_PATH" ~/.aso/
+chmod 600 ~/.aso/*.p8
+
+cat > ~/.aso/credentials.json << EOF
+{
+  "issuerId": "$ISSUER_ID",
+  "keyId": "$KEY_ID",
+  "privateKeyPath": "~/.aso/AuthKey_$KEY_ID.p8"
+}
+EOF
+
+echo "✅ Credentials saved to ~/.aso/"
 ```
+
+---
 
 ## Requirements
 
-| Operation | Requires |
-|-----------|----------|
-| Web Session | Blitz installed, Apple ID |
-| API Key | Web Session + Admin role |
-| CLI Auth | API Key (.p8 file) |
+```bash
+# Required for JWT generation
+pip3 install PyJWT cryptography
+```
 
-## Common Issues
+---
 
-### "No web session found"
-→ Run `/aso-setup` and choose "Web Session Login"
+## Troubleshooting
 
-### "Session expired" (401)
-→ Re-authenticate: `asc web auth login`
+### "No module named 'jwt'"
+```bash
+pip3 install PyJWT
+```
 
-### "Cannot create key - not Admin"
-→ User needs Account Holder or Admin role in ASC
+### "Invalid algorithm" error
+```bash
+pip3 install cryptography
+```
 
-### "Private key already downloaded"
-→ p8 can only be downloaded once. Create a new key.
+### API Key 401 error
+- Check Issuer ID (UUID format)
+- Check Key ID (10 chars)
+- Verify .p8 file is correct
+- Key must have Admin role
 
-## Agent Notes
+### Web Session 401 error
+- Cookies expired (re-login and export)
+- Missing required cookies
+- Try incognito window for clean session
 
-- Always ask for key name, never use defaults
-- NEVER print session cookies
-- Warn user that .p8 is one-time download
-- Save .p8 with 0600 permissions
-- Call `asc_set_credentials` after key creation
+---
+
+## Security Notes
+
+- .p8 files are highly sensitive - treat like passwords
+- Never commit credentials to git
+- Set file permissions to 600
+- Web sessions expire after ~30 days
+- Rotate API keys periodically
