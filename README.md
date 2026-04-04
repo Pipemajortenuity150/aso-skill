@@ -327,22 +327,64 @@ Direct API calls using JWT authentication. Run `/aso-connect setup` to configure
 
 ---
 
-## 🤝 Contributing
+## 🤝 Contributing & Extending
 
-Contributions welcome!
+### Fork & Build Your Own
 
 ```bash
+# 1. Fork on GitHub, then clone
 git clone https://github.com/YOUR_USERNAME/aso-skill.git
+cd aso-skill
+
+# 2. Install and use immediately
+cp -r . ~/.claude/skills/aso/
+
+# 3. Customize as you want
+# - Edit commands/*.md for new features
+# - Modify lib/*.py for API changes
+# - Add new agents in agents/
+```
+
+### Contribute Back
+
+```bash
 git checkout -b feature/your-feature
 git commit -m "feat: add your feature"
 git push origin feature/your-feature
+# Open a Pull Request
 ```
+
+### Extension Ideas
+
+- 🌐 **Google Play API** - Play Console integration
+- 📊 **Analytics Dashboard** - Keyword ranking history
+- 🤖 **More MCPs** - AppTweak, Sensor Tower integrations
+- 🌍 **More Languages** - Expand localization support
+- 📱 **TestFlight Management** - Beta tester workflows
+
+### Project Structure (Easy to Extend)
+
+```
+commands/     ← Add new /aso-xxx commands here
+lib/          ← Python API clients
+agents/       ← AI agent definitions
+templates/    ← Output templates
+```
+
+**All files are Markdown or Python** - no complex build system.
 
 ---
 
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) for details.
+
+**You can:**
+- ✅ Use commercially
+- ✅ Modify freely
+- ✅ Distribute copies
+- ✅ Use privately
+- ✅ Sublicense
 
 ---
 
