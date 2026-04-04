@@ -333,6 +333,18 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
+## ⭐ Star History
+
+<a href="https://star-history.com/#furkancingoz/aso-skill&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=furkancingoz/aso-skill&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=furkancingoz/aso-skill&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=furkancingoz/aso-skill&type=Date" />
+ </picture>
+</a>
+
+---
+
 <div align="center">
 
 **Created by [@furkancingoz](https://github.com/furkancingoz)**
