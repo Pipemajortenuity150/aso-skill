@@ -375,9 +375,7 @@ claude mcp add --transport http revenuecat https://mcp.revenuecat.ai/mcp --heade
 
 ### Prerequisites
 
-- Python 3 with Pillow
-- SF Pro Display Black font
-- Gemini MCP (optional, for AI enhancement)
+- Gemini MCP installed and configured
 - Simulator screenshots of your app
 
 ### Basic Usage
@@ -389,36 +387,37 @@ claude mcp add --transport http revenuecat https://mcp.revenuecat.ai/mcp --heade
 
 ### What It Does
 
-**Phase 1: Benefit Discovery**
+**Phase 1: Spec Generation**
 - Analyzes your codebase
-- Identifies 3-5 core benefits
+- Generates 3-5 specs (headlines)
 - Each starts with ACTION VERB
+- Tells user what screenshots to capture
 
-**Phase 2: Screenshot Pairing**
-- Collects simulator screenshots
-- Rates: Great / Usable / Retake
-- Pairs benefits with screenshots
+**Phase 2: User Provides Screenshots**
+- User takes screenshots from simulator
+- Matching the specs provided
+- Can add more spec + screenshot pairs
 
-**Phase 3: Generation**
-- Creates scaffold (deterministic)
-- AI enhancement (3 versions)
+**Phase 3: Gemini MCP Generation**
+- Combines spec + screenshot + brand color
+- Generates 3 polished versions
 - User picks favorite
-- Crops to App Store dimensions
+- Exports to App Store dimensions
 
 ### Output Structure
 
 ```
 screenshots/
 ├── 01-track-prices/
-│   ├── scaffold.png
-│   ├── v1.jpg, v2.jpg, v3.jpg
-│   └── v1-resized.jpg
+│   ├── simulator.png      ← User's screenshot
+│   ├── v1.jpg, v2.jpg, v3.jpg  ← Gemini versions
+│   └── final.jpg          ← User's pick
 ├── final/
 │   └── 01-track-prices.jpg
 └── showcase.png
 ```
 
-### Benefit Headline Format
+### Spec (Headline) Format
 
 ```
 [ACTION VERB] + [SPECIFIC BENEFIT]
@@ -434,7 +433,7 @@ screenshots/
 - BEST APP EVER (marketing fluff)
 ```
 
-### Screenshot Tips
+### Screenshot Tips (for User)
 
 1. **Show full data** - Lists with items, not empty states
 2. **Clean status bar** - 9:41 time, full battery

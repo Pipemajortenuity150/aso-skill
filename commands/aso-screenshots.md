@@ -1,6 +1,6 @@
 # /aso-screenshots - App Store Screenshot Generator
 
-Create professional, high-converting App Store screenshots.
+Create professional, high-converting App Store screenshots with Gemini MCP.
 
 ## Usage
 
@@ -14,38 +14,26 @@ Create professional, high-converting App Store screenshots.
 📸 Screenshot Pipeline
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Phase 1: Benefit Discovery
+Phase 1: Spec Generation (Headlines)
 └── Analyze codebase for core features
-└── Generate 3-5 ACTION VERB headlines
-└── User confirms/refines
+└── Generate 3-5 ACTION VERB headlines (= SPECS)
+└── User confirms/refines specs
 
-Phase 2: Screenshot Pairing
-└── Collect simulator screenshots
-└── Rate: Great / Usable / Retake
-└── Pair with benefits
+Phase 2: User Captures Screenshots
+└── Give specs to user
+└── User takes screenshots from simulator matching specs
+└── User can add more spec + screenshot pairs
 
-Phase 3: Scaffold Generation (compose.py)
-└── Pillow-based deterministic layout
-└── Text + Device frame + Screenshot
-└── Output: scaffold.png
-
-Phase 4: AI Enhancement (Gemini MCP)
-└── Generate 3 polished versions
+Phase 3: Gemini MCP Generation
+└── Combine: Spec + Screenshot + Brand color
+└── Generate 3 polished versions per spec
 └── User picks favorite
-└── Crop to App Store dimensions
+└── Export to App Store dimensions
 ```
 
 ## Prerequisites
 
-### 1. Python + Pillow
-```bash
-pip3 install Pillow
-```
-
-### 2. SF Pro Display Font
-Download from [Apple Developer Fonts](https://developer.apple.com/fonts/) and install to `/Library/Fonts/`
-
-### 3. Gemini MCP (for AI enhancement)
+### Gemini MCP (Required)
 ```bash
 # Install Gemini MCP
 claude mcp add gemini-mcp -s user -- npx -y @houtini/gemini-mcp
@@ -56,17 +44,17 @@ export GEMINI_API_KEY="your_api_key_here"
 
 ---
 
-## Phase 1: Benefit Discovery
+## Phase 1: Spec Generation (Headlines)
 
-Analyze the app's codebase and identify compelling benefits:
+Analyze the app's codebase and generate compelling specs:
 
 ```
-Good Headlines:
+Good Specs (Headlines):
 ✅ TRACK TRADING CARD PRICES
 ✅ SEARCH ANY VERSE IN SECONDS
 ✅ BUILD YOUR DREAM WORKOUT
 
-Bad Headlines:
+Bad Specs:
 ❌ MANAGE YOUR COLLECTION (too generic)
 ❌ SEARCH EASILY (not specific)
 ❌ GET FIT (boring)
@@ -74,96 +62,81 @@ Bad Headlines:
 
 Format: `[ACTION VERB] + [SPECIFIC BENEFIT]`
 
----
+### Output to User
+```
+📋 Screenshot Specs:
 
-## Phase 2: Screenshot Collection
+1. "TRACK TRADING CARD PRICES"
+   → Take screenshot of: Price tracking screen with cards
 
-### Requirements
+2. "SEARCH ANY VERSE IN SECONDS"
+   → Take screenshot of: Search results screen
+
+3. "BUILD YOUR DREAM WORKOUT"
+   → Take screenshot of: Workout builder screen
+
+Tips:
 - Full data states (not empty)
 - Clean status bar (9:41, full battery)
 - Consistent mode (all light or all dark)
-- Core features (not settings)
-
-### Assessment
-- **Great** → Use as-is
-- **Usable** → Can work with it
-- **Retake** → Coach for better shot
+```
 
 ---
 
-## Phase 3: Scaffold Generation
+## Phase 2: User Provides Screenshots
 
-Use `screenshot_composer.py`:
+User takes screenshots from simulator matching specs:
 
-```bash
-python3 lib/screenshot_composer.py \
-    --bg "#E31837" \
-    --verb "TRACK" \
-    --desc "TRADING CARD PRICES" \
-    --screenshot path/to/simulator.png \
-    --output screenshots/01-track/scaffold.png
 ```
+User: Here's my screenshot for "TRACK TRADING CARD PRICES"
+      [simulator_screenshot.png]
 
-### Output
-- Solid background color
-- Centered headline text
-- Device frame with screenshot
-- Pixel-perfect layout
+Agent: Got it! Want to add another spec + screenshot?
+
+User: Yes, add "COMPARE PRICES INSTANTLY"
+      [compare_screenshot.png]
+```
 
 ---
 
-## Phase 4: AI Enhancement (Gemini MCP)
+## Phase 3: Gemini MCP Generation
 
-### Using Gemini MCP Tools
+For each spec + screenshot pair, generate App Store screenshot:
 
-**Generate enhanced version:**
+### Prompt Template
 ```
-Use generate_image tool:
+Use generate_image tool with user's screenshot:
 
+"Create an App Store screenshot:
+- Spec/Headline: [SPEC FROM PHASE 1]
+- Brand color: [USER'S BRAND COLOR]
+- Screenshot: [USER'S SIMULATOR SCREENSHOT]
+- iPhone 15 Pro device frame
+- Bold headline text at top
+- Professional App Store quality
+- 1290x2796 pixels (iPhone 6.7")"
+```
+
+### Example Prompt
+```
 "Create an App Store screenshot with:
 - Bold red (#E31837) background
 - White text 'TRACK' large at top
 - 'TRADING CARD PRICES' below
-- iPhone 15 Pro frame with this app screenshot
+- iPhone 15 Pro frame containing this app screenshot
 - Professional polish, slight 3D depth
-- Breakout UI elements floating beside device
+- Optional: Breakout UI elements floating beside device
 - 1290x2796 pixels"
 ```
 
-**Edit existing scaffold:**
+### Generate 3 Versions per Spec
 ```
-Use edit_image tool on scaffold.png:
+For each spec + screenshot:
+1. v1 - Clean, minimal
+2. v2 - With breakout elements
+3. v3 - Bold, dynamic
 
-"Enhance this App Store screenshot:
-- Add subtle gradient to background
-- Make device frame more photorealistic
-- Add floating UI card elements
-- Professional App Store quality"
-```
-
-### Generate 3 Versions
-```
-For each benefit:
-1. v1.jpg - Clean, minimal
-2. v2.jpg - With breakout elements
-3. v3.jpg - Bold, dynamic
-```
-
----
-
-## Crop & Resize
-
-After AI generation, crop to exact App Store dimensions:
-
-```python
-from lib.screenshot_composer import crop_to_app_store_dimensions
-
-crop_to_app_store_dimensions(
-    "screenshots/01-track/v1.jpg",
-    "screenshots/01-track/v1-final.jpg",
-    target_w=1290,
-    target_h=2796
-)
+User picks favorite → Final export
 ```
 
 ---
@@ -185,9 +158,9 @@ crop_to_app_store_dimensions(
 ```
 screenshots/
 ├── 01-track-prices/
-│   ├── scaffold.png        ← compose.py output
+│   ├── simulator.png       ← User's screenshot
 │   ├── v1.jpg, v2.jpg, v3.jpg  ← Gemini versions
-│   └── v1-final.jpg        ← Cropped to ASC size
+│   └── final.jpg           ← User's pick
 ├── 02-search-cards/
 │   └── ...
 ├── final/
@@ -202,10 +175,9 @@ screenshots/
 ## Workflow States
 
 Progress saved to memory:
-- ✅ Benefits confirmed
-- ✅ Screenshots analyzed
-- ✅ Pairings confirmed
+- ✅ Specs (headlines) generated
 - ✅ Brand color selected
+- ✅ Screenshots received from user
 - ⏳ Generation in progress
 
 Resume anytime with `/aso-screenshots`
@@ -214,25 +186,26 @@ Resume anytime with `/aso-screenshots`
 
 ## Full Example
 
-```bash
-# 1. Generate scaffold
-python3 lib/screenshot_composer.py \
-    --bg "#E31837" \
-    --verb "TRACK" \
-    --desc "TRADING CARD PRICES" \
-    --screenshot ~/Desktop/sim1.png \
-    --output screenshots/01/scaffold.png
+```
+1. Agent analyzes codebase → generates specs:
+   - "TRACK TRADING CARD PRICES"
+   - "SEARCH ANY CARD INSTANTLY"
+   - "BUILD YOUR COLLECTION"
 
-# 2. Enhance with Gemini (in Claude)
-"Use generate_image to create 3 App Store screenshot versions based on scaffold.png"
+2. User takes screenshots from simulator matching each spec
 
-# 3. User picks v2
+3. User provides: screenshot + brand color (#E31837)
 
-# 4. Crop to final size
-python3 -c "
-from lib.screenshot_composer import crop_to_app_store_dimensions
-crop_to_app_store_dimensions('screenshots/01/v2.jpg', 'screenshots/final/01.jpg')
-"
+4. Agent uses Gemini MCP:
+   "Create App Store screenshot with:
+   - Red (#E31837) background
+   - 'TRACK TRADING CARD PRICES' headline
+   - iPhone 15 Pro frame with this screenshot
+   - 1290x2796 pixels"
+
+5. Gemini generates 3 versions → User picks favorite
+
+6. Repeat for remaining specs
 ```
 
 ---
