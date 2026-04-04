@@ -60,8 +60,10 @@ Sync IAP/Subscriptions between Project, App Store Connect, and RevenueCat.
 ~/.aso/
 ├── credentials.json    # App Store Connect API Key
 ├── AuthKey_XXXX.p8     # Private key file
-├── web-session.json    # Optional: for iris API
-└── revenuecat.json     # Optional: for RevenueCat sync
+└── web-session.json    # Optional: for iris API
+
+# RevenueCat: Uses MCP server (no local file needed)
+# Install: claude mcp add --transport http revenuecat https://mcp.revenuecat.ai/mcp --header "Authorization: Bearer V2_KEY"
 ```
 
 ### Check Status
@@ -103,25 +105,18 @@ token = jwt.encode(
 )
 ```
 
-### Setup RevenueCat (Optional)
+### Setup RevenueCat MCP (Optional)
 For `/aso-sync` to sync products to RevenueCat:
 
-1. Go to https://app.revenuecat.com/settings/api-keys
-2. Copy V1 API Key (starts with `sk_`)
-3. Note Project ID and App ID
+1. Go to https://app.revenuecat.com → Project → API Keys
+2. Create new **V2 Secret Key** (with write access)
+3. Install MCP server:
 
 ```bash
-cat > ~/.aso/revenuecat.json << 'EOF'
-{
-  "v1ApiKey": "sk_xxxxxxxxxxxxxxxxxxxx",
-  "projectId": "proj_xxxxxxxxxxxx",
-  "appId": {
-    "ios": "app_xxxxxxxxxxxx",
-    "android": "app_xxxxxxxxxxxx"
-  }
-}
-EOF
+claude mcp add --transport http revenuecat https://mcp.revenuecat.ai/mcp --header "Authorization: Bearer YOUR_V2_API_KEY"
 ```
+
+Verify with: `"Show me my RevenueCat project details"`
 
 ---
 
