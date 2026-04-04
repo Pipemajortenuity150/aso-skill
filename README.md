@@ -2,14 +2,14 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Compatible-purple.svg)
 ![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20Android-orange.svg)
 
 **The most comprehensive ASO toolkit for Claude Code**
 
-[Features](#-features) • [Installation](#-installation) • [Quick Start](#-quick-start) • [Commands](#-commands) • [Screenshots](#-screenshot-generation)
+[Features](#-features) • [Installation](#-installation) • [Quick Start](#-quick-start) • [Commands](#-commands) • [Workflows](#-workflows)
 
 </div>
 
@@ -17,7 +17,7 @@
 
 ## 📋 Overview
 
-**ASO Skill** is a complete App Store Optimization toolkit that combines the best features from 4 leading ASO projects into one unified skill for Claude Code. Generate metadata, analyze competitors, create screenshots, and submit to App Store Connect - all from natural language commands.
+**ASO Skill** is a complete App Store Optimization toolkit for Claude Code. Generate metadata, analyze competitors, create screenshots, manage versions, and submit to App Store Connect - all with 6 simple commands.
 
 ### 🎯 What Makes This Different
 
@@ -25,201 +25,183 @@
 |---------|----------------------|-----------|
 | Metadata Generation | Manual writing | AI-powered, character-validated |
 | Competitor Analysis | Expensive subscriptions | Free iTunes API integration |
-| Screenshots | Design software needed | AI-generated with device frames |
+| Screenshots | Design software needed | AI-generated with Gemini MCP |
 | App Store Connect | Manual submission | Direct API integration |
-| Workflow | Fragmented tools | Unified commands |
+| Version Management | ASC web interface | CLI commands |
+| Workflow | Fragmented tools | 6 unified commands |
 
 ---
 
 ## ✨ Features
 
-### 📝 Metadata Optimization
-- **Copy-paste ready** - Character limits validated
-- **No duplication** - Automatic keyword conflict detection
-- **Both platforms** - Apple App Store + Google Play Store
-- **Natural language** - No keyword stuffing
+### 📝 Metadata Optimization (`/aso`)
+- **Quick mode** - Copy-paste ready metadata in minutes
+- **Audit mode** - Full competitor analysis and research
+- **Localize mode** - Translate .xcstrings to 70+ languages
+- **Character validation** - All limits enforced
 
-### 🔍 Competitor Intelligence
-- **iTunes Search API** - Free, official Apple data
-- **Keyword extraction** - From competitor titles/descriptions
-- **Gap analysis** - Find opportunities competitors miss
-- **Best practices** - Learn from top apps
+### 🔌 App Store Connect (`/aso-connect`)
+- **Setup wizard** - Configure API credentials
+- **Status check** - Verify submission readiness
+- **Sync metadata** - Push to ASC directly
 
-### 📸 Screenshot Generation
-- **Spec generation** - AI analyzes codebase, creates headlines
-- **User captures** - Take screenshots matching specs
-- **Gemini MCP** - Generates professional App Store screenshots
-- **App Store ready** - Exact pixel dimensions (1290x2796)
+### 🚀 Release Management (`/aso-release`)
+- **Create versions** - New App Store versions
+- **Attach builds** - Link builds to versions
+- **Submit for review** - One command submission
+- **What's New** - Generate from git commits
+- **Phased release** - Control rollout percentage
 
-### 🚀 App Store Connect
-- **Privacy labels** - Automated configuration
-- **Metadata submission** - Direct API integration
-- **Web session auth** - Secure authentication
+### 📸 Assets (`/aso-assets`)
+- **Screenshots** - AI-generated with Gemini MCP
+- **IAP setup** - Create and manage in-app purchases
+- **Upload** - Push assets to ASC
+
+### 💬 Management (`/aso-manage`)
+- **Reviews** - AI response suggestions
+- **Legal docs** - Privacy Policy, Terms, EULA
+- **GDPR/CCPA** - Compliance ready
+
+### 🔨 Build (`/aso-build`)
+- **XcodeBuildMCP** - Build, archive, upload
+- **Simulator/Device** - Target any platform
+- **TestFlight** - Direct upload
 
 ---
 
 ## 📦 Installation
 
-### Option 1: User-Level Installation (Recommended)
-
-```bash
-# Clone the repository
-git clone https://github.com/furkancingoz/aso-skill.git
-cd aso-skill
-
-# Install to Claude Code skills directory
-cp -r . ~/.claude/skills/aso/
-
-# Verify installation
-ls ~/.claude/skills/aso/
-```
-
-### Option 2: Project-Level Installation
-
-```bash
-# From your project directory
-mkdir -p .claude/skills
-cp -r /path/to/aso-skill .claude/skills/aso/
-```
-
-### Option 3: Direct Clone
+### Option 1: User-Level (Recommended)
 
 ```bash
 git clone https://github.com/furkancingoz/aso-skill.git ~/.claude/skills/aso
 ```
 
-### Dependencies (Optional)
+### Option 2: Project-Level
 
 ```bash
-# For screenshot generation (Gemini MCP)
+mkdir -p .claude/skills
+git clone https://github.com/furkancingoz/aso-skill.git .claude/skills/aso
+```
+
+### Dependencies
+
+```bash
+# Required: JWT token generation
+pip3 install PyJWT cryptography
+
+# Optional: Screenshot generation
 claude mcp add gemini-mcp -s user -- npx -y @houtini/gemini-mcp
-export GEMINI_API_KEY="your_api_key_here"
+export GEMINI_API_KEY="your_key"
+
+# Optional: IAP sync with RevenueCat
+claude mcp add --transport http revenuecat https://mcp.revenuecat.ai/mcp \
+  --header "Authorization: Bearer YOUR_V2_API_KEY"
 ```
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Quick Metadata Generation
-
+### 1. Setup Credentials
 ```
-/aso TaskFlow - AI task manager for professionals
-```
-
-**Output:** Copy-paste ready metadata in 2-5 minutes
-
-### 2. Full ASO Audit
-
-```
-/aso-audit TaskFlow
+/aso-connect setup
 ```
 
-**Output:** Complete research, metadata, and launch plan in 20-30 minutes
-
-### 3. Screenshot Creation
-
+### 2. Generate Metadata
 ```
-/aso-screenshots
+/aso TaskFlow
 ```
 
-**Output:** Professional App Store screenshots with device frames
+### 3. Create Screenshots
+```
+/aso-assets screenshots
+```
+
+### 4. Submit to App Store
+```
+/aso-release create 1.0.0
+/aso-release attach
+/aso-connect sync
+/aso-release submit
+```
 
 ---
 
 ## 🎮 Commands
 
-| Command | Description |
-|---------|-------------|
-| `/aso [app-name]` | Quick metadata generation (any language) |
-| `/aso-audit [app-name]` | Full ASO audit with competitor analysis |
-| `/aso-submit [app-name]` | Push to App Store Connect (metadata, privacy, screenshots) |
-| `/aso-iap [app-name]` | Set up IAPs & Subscriptions |
-| `/aso-screenshots` | Generate App Store screenshot specifications |
-| `/aso-sync` | Sync IAPs between Project, ASC, and RevenueCat MCP |
-| `/aso-setup` | Configure API credentials |
-| `/aso-status` | Check submission readiness |
-| `/aso-setup` | Configure credentials (API key, web session) |
+| Command | Purpose | Subcommands |
+|---------|---------|-------------|
+| `/aso` | Metadata generation | (default), --audit, --localize |
+| `/aso-connect` | ASC integration | setup, status, sync |
+| `/aso-release` | Version management | create, attach, submit, notes, phased |
+| `/aso-assets` | Screenshots & IAP | screenshots, iap |
+| `/aso-manage` | Reviews & legal | reviews, legal |
+| `/aso-build` | Xcode build | (default), --archive, --upload |
 
----
+### Command Examples
 
-## 📊 Output Structure
+```bash
+# Quick metadata
+/aso "My App Name"
 
-### Quick Mode (`/aso`)
-```
-Copy-paste ready JSON:
-{
-  "title": "TaskFlow - AI Task Manager",
-  "subtitle": "Smart Productivity & Focus",
-  "keywords": "productivity,organize,planner...",
-  "description": "..."
-}
-```
+# Full audit with competitors
+/aso MyApp --audit --competitors "Todoist,Any.do"
 
-### Audit Mode (`/aso-audit`)
-```
-outputs/[app-name]/
-├── 00-MASTER-ACTION-PLAN.md      # Start here
-├── 01-research/
-│   ├── keyword-list.md           # Prioritized keywords
-│   ├── competitor-analysis.md    # Gap analysis
-│   └── market-gaps.md            # Opportunities
-├── 02-metadata/
-│   ├── apple-metadata.md         # Copy-paste for ASC
-│   ├── google-metadata.md        # Copy-paste for Play Console
-│   └── visual-assets-spec.md     # Screenshot specs
-├── 03-launch/
-│   ├── prelaunch-checklist.md    # 47-item validation
-│   └── timeline.md               # Specific dates
-└── 04-optimization/
-    ├── review-templates.md       # Response templates
-    └── ongoing-tasks.md          # Daily/weekly tasks
-```
+# Translate to multiple languages
+/aso --localize tr,de,ja
 
-### Screenshot Mode (`/aso-screenshots`)
-```
-screenshots/
-├── 01-track-prices/
-│   ├── simulator.png             # User's screenshot
-│   ├── v1.jpg, v2.jpg, v3.jpg    # Gemini versions
-│   └── final.jpg                 # User's pick
-├── final/
-│   ├── 01-track-prices.jpg       # Approved
-│   └── 02-search-cards.jpg
-└── showcase.png                   # Preview image
+# Check submission readiness
+/aso-connect status
+
+# Create new version and submit
+/aso-release create 1.2.0
+/aso-release attach
+/aso-release submit
+
+# Generate screenshots
+/aso-assets screenshots
+
+# Manage reviews
+/aso-manage reviews --negative
+
+# Generate legal documents
+/aso-manage legal privacy
 ```
 
 ---
 
-## 📱 Screenshot Generation
+## 📊 Workflows
 
-### How It Works
-
-1. **Spec Generation** - AI analyzes your codebase, creates headline specs
-2. **User Captures** - You take screenshots from simulator matching specs
-3. **Gemini MCP** - Combines spec + screenshot + brand color
-4. **Version Selection** - Generates 3 versions, you pick favorite
-5. **Export** - Final screenshot at App Store dimensions (1290x2796)
-
-### Supported Sizes
-
-| Display | Dimensions |
-|---------|------------|
-| iPhone 6.5" | 1242 × 2688 px |
-| iPhone 6.7" | 1290 × 2796 px (default) |
-| iPhone 6.9" | 1320 × 2868 px |
-
-### Benefit Headline Format
+### Full App Store Submission
 
 ```
-[ACTION VERB] + [BENEFIT]
+/aso-connect setup                # 1. Configure credentials
+/aso AppName --audit              # 2. Research + optimize
+/aso-assets screenshots           # 3. Generate screenshots
+/aso-assets iap                   # 4. Set up IAPs
+/aso-release create 1.0.0         # 5. Create version
+/aso-release attach               # 6. Attach build
+/aso-connect sync                 # 7. Push metadata
+/aso-connect status               # 8. Verify readiness
+/aso-release submit               # 9. Submit for review
+```
 
-Examples:
-✅ TRACK TRADING CARD PRICES
-✅ SEARCH ANY VERSE IN SECONDS
-✅ BUILD YOUR DREAM WORKOUT
+### Version Update
 
-❌ MANAGE YOUR STUFF (too generic)
-❌ USE OUR APP (not benefit-focused)
+```
+/aso-release notes                # Generate What's New from git
+/aso-release create 1.1.0         # Create new version
+/aso-release attach               # Attach latest build
+/aso-release submit               # Submit for review
+/aso-release phased start         # Enable phased release
+```
+
+### Localization
+
+```
+/aso --localize tr,de,ja          # Translate .xcstrings
+/aso-connect sync --locale tr     # Sync Turkish metadata
 ```
 
 ---
@@ -232,8 +214,8 @@ Examples:
 |-------|-------|-------|
 | Title | 30 | Include primary keyword |
 | Subtitle | 30 | No overlap with title |
-| Promo Text | 170 | Editable without update |
 | Keywords | 100 | Comma-separated, no spaces |
+| Promo Text | 170 | Editable without update |
 | Description | 4000 | Include app name 3-5x |
 
 ### Google Play Store
@@ -253,21 +235,20 @@ aso-skill/
 ├── SKILL.md              # Main skill definition
 ├── CLAUDE.md             # Development guidance
 ├── README.md             # This file
-├── INSTALL.md            # Detailed installation
-├── LICENSE               # MIT License
 ├── agents/
 │   ├── aso-quick.md      # Fast metadata (sonnet)
 │   └── aso-full.md       # Full audit (opus)
 ├── commands/
-│   ├── aso.md            # /aso
-│   ├── aso-audit.md      # /aso-audit
-│   ├── aso-submit.md     # /aso-submit
-│   └── aso-screenshots.md # /aso-screenshots
+│   ├── aso.md            # Metadata + audit + localize
+│   ├── aso-connect.md    # Setup + status + sync
+│   ├── aso-release.md    # Version + build + submit
+│   ├── aso-assets.md     # Screenshots + IAP
+│   ├── aso-manage.md     # Reviews + legal
+│   └── aso-build.md      # Xcode build
 ├── lib/
 │   ├── itunes_api.py     # iTunes Search API
 │   ├── keyword_engine.py # Keyword analysis
-│   ├── asc_api.py        # App Store Connect
-│   └── screenshot_composer.py # Screenshot gen
+│   └── asc_api.py        # App Store Connect API
 └── templates/
     ├── apple-metadata.md
     └── google-metadata.md
@@ -277,30 +258,31 @@ aso-skill/
 
 ## 🔌 Integrations
 
+### App Store Connect API (Built-in)
+- Direct API integration
+- JWT authentication
+- Version, build, metadata management
+
 ### iTunes Search API (Built-in)
 - Free, official Apple API
+- Competitor analysis
 - No authentication required
-- Competitor metadata and ratings
 
-### Astro MCP (Optional)
-- Real-time keyword rankings
-- App ratings history
-- Setup: https://tryastro.app/docs/mcp/
+### Gemini MCP (Screenshots)
+```bash
+claude mcp add gemini-mcp -s user -- npx -y @houtini/gemini-mcp
+export GEMINI_API_KEY="your_key"
+```
 
-### Gemini MCP (Screenshot Generation)
-- AI-powered App Store screenshot generation
-- Install: `claude mcp add gemini-mcp -s user -- npx -y @houtini/gemini-mcp`
-- Set: `export GEMINI_API_KEY="your_key"`
+### RevenueCat MCP (IAP Sync)
+```bash
+claude mcp add --transport http revenuecat https://mcp.revenuecat.ai/mcp \
+  --header "Authorization: Bearer YOUR_V2_API_KEY"
+```
 
-### App Store Connect (Direct API)
-- Direct submission via ASC API
-- Privacy labels configuration
-- JWT authentication (API Key)
-
-### RevenueCat MCP
-- Official cloud-hosted MCP server
-- Product, entitlement, offering management
-- Natural language commands
+### XcodeBuildMCP (Build)
+- Build, archive, upload
+- See: https://github.com/getsentry/XcodeBuildMCP
 
 ---
 
@@ -324,11 +306,8 @@ This skill combines best practices from:
 ### Can I use this for both iOS and Android?
 **Yes.** Generates metadata for Apple App Store and Google Play Store.
 
-### How accurate are keyword volumes?
-Estimates based on industry benchmarks (±20%). Use Apple Search Ads for exact volumes.
-
-### How does App Store Connect integration work?
-Direct API calls using JWT authentication. Run `/aso-setup` to configure your API key, then use `/aso-submit` to push metadata.
+### How does App Store Connect work?
+Direct API calls using JWT authentication. Run `/aso-connect setup` to configure.
 
 ### Can I customize the agents?
 **Yes.** All agents are Markdown files - edit freely.
@@ -337,24 +316,12 @@ Direct API calls using JWT authentication. Run `/aso-setup` to configure your AP
 
 ## 🤝 Contributing
 
-Contributions welcome! Areas for improvement:
-
-1. **Additional data sources** - AppTweak, Sensor Tower integration
-2. **Localization** - Multi-language metadata
-3. **Analytics** - Keyword ranking tracking
-4. **Documentation** - Video tutorials
+Contributions welcome!
 
 ```bash
-# Fork and clone
 git clone https://github.com/YOUR_USERNAME/aso-skill.git
-
-# Create feature branch
 git checkout -b feature/your-feature
-
-# Make changes and commit
 git commit -m "feat: add your feature"
-
-# Push and create PR
 git push origin feature/your-feature
 ```
 
@@ -363,14 +330,6 @@ git push origin feature/your-feature
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) for details.
-
----
-
-## 🆘 Support
-
-- **Documentation:** [INSTALL.md](INSTALL.md), [CLAUDE.md](CLAUDE.md)
-- **Issues:** Open an issue on GitHub
-- **Templates:** Check `templates/` folder
 
 ---
 
