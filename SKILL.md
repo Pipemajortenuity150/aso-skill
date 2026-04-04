@@ -59,7 +59,23 @@ Translate Xcode .xcstrings files using AI.
 - **Features**: Batch translation, context-aware, preserves placeholders
 - **Supports**: 70+ languages
 
-### 12. SYNC MODE (`/aso-sync`)
+### 12. WHAT'S NEW MODE (`/aso-whatsnew`)
+Generate release notes from git commits or changelog.
+- **Output**: User-friendly What's New text
+- **Sources**: Git log, CHANGELOG.md
+- **Features**: Auto-translate, push to ASC
+
+### 13. REVIEWS MODE (`/aso-reviews`)
+Manage App Store reviews with AI response suggestions.
+- **Output**: Response suggestions, analytics
+- **Features**: Sentiment analysis, batch respond
+
+### 14. LEGAL MODE (`/aso-legal`)
+Generate legal documents for your app.
+- **Output**: Privacy Policy, Terms of Use, EULA
+- **Compliance**: GDPR, CCPA, Apple guidelines
+
+### 15. SYNC MODE (`/aso-sync`)
 Sync IAP/Subscriptions between Project, App Store Connect, and RevenueCat.
 - **Output**: Products synced across all platforms
 - **Sources**: StoreKit config, Swift files
@@ -492,6 +508,9 @@ pip3 install PyJWT cryptography
 | `/aso-screenshots` | Screenshot generation + upload |
 | `/aso-version` | Version, build & review submission |
 | `/aso-localize` | .xcstrings AI translation |
+| `/aso-whatsnew` | Generate release notes |
+| `/aso-reviews` | Review management + AI responses |
+| `/aso-legal` | Privacy Policy, Terms, EULA |
 | `/aso-sync` | Project-ASC-RevenueCat sync |
 | `/aso-setup` | Configure credentials |
 | `/aso-status` | Check submission readiness |
