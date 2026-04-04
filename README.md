@@ -143,6 +143,7 @@ For screenshot generation, install **SF Pro Display Black**:
 | `/aso-submit [app-name]` | Push to App Store Connect (metadata, privacy, screenshots) |
 | `/aso-iap [app-name]` | Set up IAPs & Subscriptions |
 | `/aso-screenshots` | Generate App Store screenshot specifications |
+| `/aso-sync` | Sync IAPs between Project, ASC, and RevenueCat |
 | `/aso-setup` | Configure credentials (API key, web session) |
 
 ---

@@ -45,6 +45,12 @@ Configure credentials and authentication.
 Check submission readiness.
 - **Output**: Complete checklist of what's done and what's missing
 
+### 8. SYNC MODE (`/aso-sync`)
+Sync IAP/Subscriptions between Project, App Store Connect, and RevenueCat.
+- **Output**: Products synced across all platforms
+- **Sources**: StoreKit config, Swift files
+- **Targets**: ASC + RevenueCat
+
 ---
 
 ## AUTHENTICATION
@@ -52,9 +58,10 @@ Check submission readiness.
 ### Credentials Location
 ```
 ~/.aso/
-├── credentials.json    # API Key info
+├── credentials.json    # App Store Connect API Key
 ├── AuthKey_XXXX.p8     # Private key file
-└── web-session.json    # Optional: for iris API
+├── web-session.json    # Optional: for iris API
+└── revenuecat.json     # Optional: for RevenueCat sync
 ```
 
 ### Check Status
@@ -94,6 +101,26 @@ token = jwt.encode(
     {"iss": creds["issuerId"], "iat": int(time.time()), "exp": int(time.time()) + 1200, "aud": "appstoreconnect-v1"},
     private_key, algorithm="ES256", headers={"kid": creds["keyId"], "typ": "JWT"}
 )
+```
+
+### Setup RevenueCat (Optional)
+For `/aso-sync` to sync products to RevenueCat:
+
+1. Go to https://app.revenuecat.com/settings/api-keys
+2. Copy V1 API Key (starts with `sk_`)
+3. Note Project ID and App ID
+
+```bash
+cat > ~/.aso/revenuecat.json << 'EOF'
+{
+  "v1ApiKey": "sk_xxxxxxxxxxxxxxxxxxxx",
+  "projectId": "proj_xxxxxxxxxxxx",
+  "appId": {
+    "ios": "app_xxxxxxxxxxxx",
+    "android": "app_xxxxxxxxxxxx"
+  }
+}
+EOF
 ```
 
 ---
