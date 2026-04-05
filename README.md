@@ -1,4 +1,4 @@
-# 🚀 ASO Skill - Complete App Store Optimization for Claude Code
+# 🚀 ASO Skill - Complete App Store Optimization for Claude Code.
 
 <div align="center">
 
